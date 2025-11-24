@@ -85,6 +85,7 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', user['id'] ?? '');
     await prefs.setString('user_email', user['email'] ?? '');
+    await prefs.setString('user_mobile', user['mobile'] ?? '');
     await prefs.setString('user_name', user['name'] ?? '');
     await prefs.setString('user_username', user['username'] ?? '');
     await prefs.setBool('is_logged_in', true);
@@ -100,6 +101,7 @@ class ApiService {
     return {
       'id': prefs.getString('user_id') ?? '',
       'email': prefs.getString('user_email') ?? '',
+      'mobile': prefs.getString('user_mobile') ?? '',
       'name': prefs.getString('user_name') ?? '',
       'username': prefs.getString('user_username') ?? '',
       'last_login': prefs.getInt('last_login') ?? 0,

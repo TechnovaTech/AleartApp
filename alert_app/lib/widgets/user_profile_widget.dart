@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../screens/user_profile.dart';
 
 class UserProfileWidget extends StatefulWidget {
   const UserProfileWidget({super.key});
@@ -59,82 +60,44 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: screenWidth * 0.06,
-                backgroundColor: Colors.blue,
-                child: Text(
-                  (userData!['name'] as String).isNotEmpty 
-                      ? (userData!['name'] as String)[0].toUpperCase()
-                      : (userData!['username'] as String)[0].toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.05,
-                    fontWeight: FontWeight.bold,
-                  ),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UserProfileScreen()),
+          );
+        },
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: screenWidth * 0.06,
+              backgroundColor: Colors.blue,
+              child: Text(
+                (userData!['name'] as String).isNotEmpty 
+                    ? (userData!['name'] as String)[0].toUpperCase()
+                    : (userData!['username'] as String)[0].toUpperCase(),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth * 0.05,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(width: screenWidth * 0.03),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userData!['name'].isNotEmpty 
-                          ? userData!['name'] 
-                          : userData!['username'],
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      userData!['email'],
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.035,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+            ),
+            SizedBox(width: screenWidth * 0.03),
+            Expanded(
+              child: Text(
+                userData!['name'].isNotEmpty 
+                    ? userData!['name'] 
+                    : userData!['username'],
+                style: TextStyle(
+                  fontSize: screenWidth * 0.04,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: screenWidth * 0.03),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.03,
-              vertical: screenWidth * 0.02,
             ),
-            decoration: BoxDecoration(
-              color: Colors.green[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: screenWidth * 0.04,
-                ),
-                SizedBox(width: screenWidth * 0.02),
-                Text(
-                  'Active User',
-                  style: TextStyle(
-                    color: Colors.green[700],
-                    fontSize: screenWidth * 0.03,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+            Icon(Icons.arrow_forward_ios, size: screenWidth * 0.04, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
