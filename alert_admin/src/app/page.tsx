@@ -13,15 +13,28 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     
-    // Simulate login
-    setTimeout(() => {
-      if (email === 'admin@alertpe.com' && password === 'admin123') {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.success && data.user.role === 'admin') {
+        localStorage.setItem('adminUser', JSON.stringify(data.user))
         window.location.href = '/dashboard'
       } else {
-        alert('Invalid credentials')
+        alert('Invalid admin credentials')
       }
-      setIsLoading(false)
-    }, 1000)
+    } catch (error) {
+      alert('Login failed. Please try again.')
+    }
+    
+    setIsLoading(false)
   }
 
   return (
@@ -85,11 +98,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
-              Demo: admin@alertpe.com / admin123
-            </p>
-          </div>
+
         </div>
       </div>
     </div>
