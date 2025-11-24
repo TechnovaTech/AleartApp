@@ -113,4 +113,31 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('is_logged_in') ?? false;
   }
+  
+  static Future<Map<String, dynamic>> saveQRCode({
+    required String upiId,
+    required String userId,
+  }) async {
+    final request = http.post(
+      Uri.parse('$baseUrl/qr'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'upiId': upiId,
+        'userId': userId,
+      }),
+    );
+    
+    return await _handleRequest(request);
+  }
+  
+  static Future<Map<String, dynamic>> getQRCodes({
+    required String userId,
+  }) async {
+    final request = http.get(
+      Uri.parse('$baseUrl/qr?userId=$userId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    
+    return await _handleRequest(request);
+  }
 }
