@@ -8,7 +8,6 @@ interface User {
   username: string
   email: string
   mobile: string
-  name: string
   isActive: boolean
   subscription: string
   role: string
@@ -333,12 +332,12 @@ export default function UsersPage() {
                       <div className="flex items-center">
                         <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
                           <span className="text-white font-medium text-sm">
-                            {user.name.charAt(0) || user.username.charAt(0)}
+                            {user.username.charAt(0)}
                           </span>
                         </div>
                         <div className="ml-4">
                           <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-gray-900">{user.name || user.username}</div>
+                            <div className="text-sm font-medium text-gray-900">{user.username}</div>
                             {user.role === 'admin' && (
                               <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
                                 Admin
@@ -428,11 +427,11 @@ export default function UsersPage() {
               <div className="flex items-center space-x-4">
                 <div className="h-16 w-16 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-xl">
-                    {selectedUser.name.charAt(0) || selectedUser.username.charAt(0)}
+                    {selectedUser.username.charAt(0)}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">{selectedUser.name || selectedUser.username}</h3>
+                  <h3 className="text-lg font-semibold">{selectedUser.username}</h3>
                   <p className="text-gray-600">@{selectedUser.username}</p>
                 </div>
               </div>
@@ -509,7 +508,7 @@ export default function UsersPage() {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Delete User</h3>
               <p className="text-sm text-gray-500 mb-6">
-                Are you sure you want to delete <strong>{selectedUser.name || selectedUser.username}</strong>? This action cannot be undone.
+                Are you sure you want to delete <strong>{selectedUser.username}</strong>? This action cannot be undone.
               </p>
               <div className="flex space-x-3">
                 <button

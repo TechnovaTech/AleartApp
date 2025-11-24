@@ -12,21 +12,22 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 200, headers: corsHeaders })
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await dbConnect()
     
-    const { isActive } = await request.json()
-    const { id } = params
+    const { username, mobile, isActive } = await request.json()
+    
+    const updateData: any = {}
+    if (username !== undefined) updateData.username = username
+    if (mobile !== undefined) updateData.mobile = mobile
+    if (isActive !== undefined) updateData.isActive = isActive
     
     const user = await User.findByIdAndUpdate(
-      id,
-      { isActive },
-      { new: true }
-    ).select('-password')
+      params.id,
+      updateData,
+      { new: true, select: '-password' }
+    )
     
     if (!user) {
       return NextResponse.json(
@@ -37,27 +38,23 @@ export async function PATCH(
     
     return NextResponse.json({
       success: true,
-      user
+      user: user
     }, { headers: corsHeaders })
     
   } catch (error) {
+    console.error('Update user error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to update user' },
       { status: 500, headers: corsHeaders }
     )
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await dbConnect()
     
-    const { id } = params
-    
-    const user = await User.findByIdAndDelete(id)
+    const user = await User.findByIdAndDelete(params.id)
     
     if (!user) {
       return NextResponse.json(
@@ -73,7 +70,7 @@ export async function DELETE(
     
   } catch (error) {
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to delete user' },
       { status: 500, headers: corsHeaders }
     )
   }

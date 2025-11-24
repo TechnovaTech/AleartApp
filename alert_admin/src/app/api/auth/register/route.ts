@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
       email,
       password: hashedPassword,
       mobile,
-      name: username,
       role: 'user'
     })
     
@@ -60,8 +59,7 @@ export async function POST(request: NextRequest) {
         id: user._id,
         username: user.username,
         email: user.email,
-        mobile: user.mobile,
-        name: user.name
+        mobile: user.mobile
       }
     }, { headers: corsHeaders })
     

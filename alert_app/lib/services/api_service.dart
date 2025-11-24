@@ -86,7 +86,6 @@ class ApiService {
     await prefs.setString('user_id', user['id'] ?? '');
     await prefs.setString('user_email', user['email'] ?? '');
     await prefs.setString('user_mobile', user['mobile'] ?? '');
-    await prefs.setString('user_name', user['name'] ?? '');
     await prefs.setString('user_username', user['username'] ?? '');
     await prefs.setBool('is_logged_in', true);
     await prefs.setInt('last_login', DateTime.now().millisecondsSinceEpoch);
@@ -102,7 +101,6 @@ class ApiService {
       'id': prefs.getString('user_id') ?? '',
       'email': prefs.getString('user_email') ?? '',
       'mobile': prefs.getString('user_mobile') ?? '',
-      'name': prefs.getString('user_name') ?? '',
       'username': prefs.getString('user_username') ?? '',
       'last_login': prefs.getInt('last_login') ?? 0,
     };
@@ -143,5 +141,31 @@ class ApiService {
     );
     
     return await _handleRequest(request);
+  }
+  
+  static Future<Map<String, dynamic>> updateProfile({
+    required String userId,
+    required String username,
+    required String mobile,
+  }) async {
+    final request = http.patch(
+      Uri.parse('$baseUrl/users/$userId'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': username,
+        'mobile': mobile,
+      }),
+    );
+    
+    final result = await _handleRequest(request);
+    
+    // Update cached data if successful
+    if (result['success'] == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_username', username);
+      await prefs.setString('user_mobile', mobile);
+    }
+    
+    return result;
   }
 }

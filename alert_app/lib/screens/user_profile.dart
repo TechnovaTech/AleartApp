@@ -12,6 +12,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Map<String, dynamic>? userData;
   List<dynamic> userQRs = [];
   bool isLoading = true;
+  bool isEditing = false;
+  final _usernameController = TextEditingController();
+  final _mobileController = TextEditingController();
 
   @override
   void initState() {
@@ -74,9 +77,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               radius: screenWidth * 0.1,
                               backgroundColor: Colors.blue,
                               child: Text(
-                                (userData!['name'] as String).isNotEmpty 
-                                    ? (userData!['name'] as String)[0].toUpperCase()
-                                    : (userData!['username'] as String)[0].toUpperCase(),
+                                (userData!['username'] as String)[0].toUpperCase(),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: screenWidth * 0.08,
@@ -86,9 +87,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             ),
                             SizedBox(height: screenWidth * 0.03),
                             Text(
-                              userData!['name'].isNotEmpty 
-                                  ? userData!['name'] 
-                                  : userData!['username'],
+                              userData!['username'],
                               style: TextStyle(
                                 fontSize: screenWidth * 0.05,
                                 fontWeight: FontWeight.bold,
@@ -117,17 +116,40 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Account Details',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.045,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Account Details',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    if (isEditing) {
+                                      _saveChanges();
+                                    } else {
+                                      _startEditing();
+                                    }
+                                  },
+                                  icon: Icon(
+                                    isEditing ? Icons.save : Icons.edit,
+                                    color: Colors.blue,
+                                    size: screenWidth * 0.05,
+                                  ),
+                                ),
+                              ],
                             ),
                             SizedBox(height: screenWidth * 0.03),
                             _buildDetailRow('Email', userData!['email'], screenWidth),
-                            _buildDetailRow('Mobile', userData!['mobile'] ?? 'Not provided', screenWidth),
-                            _buildDetailRow('Username', userData!['username'], screenWidth),
+                            isEditing 
+                                ? _buildEditableRow('Mobile', _mobileController, screenWidth)
+                                : _buildDetailRow('Mobile', userData!['mobile'] ?? 'Not provided', screenWidth),
+                            isEditing 
+                                ? _buildEditableRow('Username', _usernameController, screenWidth)
+                                : _buildDetailRow('Username', userData!['username'], screenWidth),
                             _buildDetailRow('Status', 'Active', screenWidth),
                           ],
                         ),
@@ -203,6 +225,54 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  void _startEditing() {
+    _usernameController.text = userData!['username'];
+    _mobileController.text = userData!['mobile'] ?? '';
+    setState(() {
+      isEditing = true;
+    });
+  }
+
+  void _saveChanges() async {
+    final newUsername = _usernameController.text.trim();
+    final newMobile = _mobileController.text.trim();
+    
+    if (newUsername.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username cannot be empty')),
+      );
+      return;
+    }
+    
+    if (newMobile.isNotEmpty && newMobile.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mobile number must be 10 digits')),
+      );
+      return;
+    }
+    
+    final result = await ApiService.updateProfile(
+      userId: userData!['id'],
+      username: newUsername,
+      mobile: newMobile,
+    );
+    
+    if (result['success'] == true) {
+      setState(() {
+        userData!['username'] = newUsername;
+        userData!['mobile'] = newMobile;
+        isEditing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Update failed')),
+      );
+    }
+  }
+
   Widget _buildDetailRow(String label, String value, double screenWidth) {
     return Padding(
       padding: EdgeInsets.only(bottom: screenWidth * 0.02),
@@ -227,6 +297,49 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 fontSize: screenWidth * 0.035,
                 fontWeight: FontWeight.w500,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditableRow(String label, TextEditingController controller, double screenWidth) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: screenWidth * 0.02),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: screenWidth * 0.25,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: screenWidth * 0.035,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              style: TextStyle(
+                fontSize: screenWidth * 0.035,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.02,
+                  vertical: screenWidth * 0.01,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              keyboardType: label == 'Mobile' ? TextInputType.phone : TextInputType.text,
+              maxLength: label == 'Mobile' ? 10 : null,
             ),
           ),
         ],

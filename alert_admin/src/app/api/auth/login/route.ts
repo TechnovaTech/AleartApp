@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
         username: user.username,
         email: user.email,
         mobile: user.mobile,
-        name: user.name,
         role: user.role
       }
     }, { headers: corsHeaders })

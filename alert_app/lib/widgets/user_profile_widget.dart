@@ -73,9 +73,7 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
               radius: screenWidth * 0.06,
               backgroundColor: Colors.blue,
               child: Text(
-                (userData!['name'] as String).isNotEmpty 
-                    ? (userData!['name'] as String)[0].toUpperCase()
-                    : (userData!['username'] as String)[0].toUpperCase(),
+                (userData!['username'] as String)[0].toUpperCase(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.05,
@@ -86,9 +84,7 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
             SizedBox(width: screenWidth * 0.03),
             Expanded(
               child: Text(
-                userData!['name'].isNotEmpty 
-                    ? userData!['name'] 
-                    : userData!['username'],
+                userData!['username'],
                 style: TextStyle(
                   fontSize: screenWidth * 0.04,
                   fontWeight: FontWeight.bold,
