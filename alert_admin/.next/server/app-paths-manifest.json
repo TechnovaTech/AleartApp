@@ -1,9 +1,9 @@
 {
-  "/qr/page": "app/qr/page.js",
+  "/api/users/[id]/route": "app/api/users/[id]/route.js",
+  "/api/users/route": "app/api/users/route.js",
   "/users/page": "app/users/page.js",
-  "/payments/page": "app/payments/page.js",
-  "/analytics/page": "app/analytics/page.js",
+  "/qr/page": "app/qr/page.js",
   "/plans/page": "app/plans/page.js",
-  "/notifications/page": "app/notifications/page.js",
+  "/analytics/page": "app/analytics/page.js",
   "/settings/page": "app/settings/page.js"
 }
