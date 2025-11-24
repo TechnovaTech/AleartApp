@@ -87,7 +87,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: screenWidth * 0.05,
+            fontSize: screenWidth * 0.045,
           ),
         ),
         centerTitle: true,

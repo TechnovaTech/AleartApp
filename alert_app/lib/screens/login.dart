@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: screenWidth * 0.05,
+            fontSize: screenWidth * 0.045,
           ),
         ),
         centerTitle: true,
@@ -248,7 +248,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: screenWidth * 0.05,
+            fontSize: screenWidth * 0.045,
           ),
         ),
         centerTitle: true,

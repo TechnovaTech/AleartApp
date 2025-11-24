@@ -83,9 +83,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
           onTap: () => Navigator.pop(context),
           child: const Icon(Icons.arrow_back, color: Colors.white),
         ),
-        title: const Text(
+        title: Text(
           'Reports',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: MediaQuery.of(context).size.width * 0.045,
+          ),
         ),
       ),
       body: Column(

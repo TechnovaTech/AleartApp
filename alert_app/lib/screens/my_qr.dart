@@ -36,65 +36,74 @@ class _MyQRScreenState extends State<MyQRScreen> {
     final qrBoxSize = screenWidth - 32;
 
     return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            color: Colors.blue,
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04,
-              vertical: screenWidth * 0.05,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'My QR Code',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.07,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'My QR Code',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: screenWidth * 0.045,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: EdgeInsets.all(screenWidth * 0.02),
+            child: GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const LanguagePopup(),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: Colors.blue[300]!, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => const LanguagePopup(),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.03,
-                      vertical: screenWidth * 0.015,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          'अ',
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: screenWidth * 0.02),
-                        Text(
-                          'A',
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.035,
+                  vertical: screenWidth * 0.025,
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'अ',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[700],
+                      ),
+                    ),
+                    SizedBox(width: screenWidth * 0.01),
+                    Text(
+                      'A',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
+        ],
+      ),
+      body: Column(
+        children: [
           Expanded(
             child: SingleChildScrollView(
               child: Column(
