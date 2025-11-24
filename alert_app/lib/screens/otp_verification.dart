@@ -4,11 +4,13 @@ import 'set_password.dart';
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
   final String username;
+  final String mobile;
 
   const OTPVerificationScreen({
     super.key,
     required this.email,
     required this.username,
+    required this.mobile,
   });
 
   @override
@@ -56,6 +58,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           builder: (context) => SetPasswordScreen(
             email: widget.email,
             username: widget.username,
+            mobile: widget.mobile,
           ),
         ),
       );

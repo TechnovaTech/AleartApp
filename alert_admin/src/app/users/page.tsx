@@ -7,6 +7,7 @@ interface User {
   _id: string
   username: string
   email: string
+  mobile: string
   name: string
   isActive: boolean
   subscription: string
@@ -440,6 +441,10 @@ export default function UsersPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>
                   <p className="text-sm text-gray-900">{selectedUser.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Mobile</label>
+                  <p className="text-sm text-gray-900">{selectedUser.mobile}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Role</label>

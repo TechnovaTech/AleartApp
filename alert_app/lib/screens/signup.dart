@@ -12,22 +12,32 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _mobileController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _usernameController.dispose();
     _emailController.dispose();
+    _mobileController.dispose();
     super.dispose();
   }
 
   void _sendOTP() {
     final username = _usernameController.text;
     final email = _emailController.text;
+    final mobile = _mobileController.text;
 
-    if (username.isEmpty || email.isEmpty) {
+    if (username.isEmpty || email.isEmpty || mobile.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    if (mobile.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid 10-digit mobile number')),
       );
       return;
     }
@@ -46,6 +56,7 @@ class _SignupScreenState extends State<SignupScreen> {
         builder: (context) => OTPVerificationScreen(
           email: email,
           username: username,
+          mobile: mobile,
         ),
       ),
     );
@@ -117,6 +128,23 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   keyboardType: TextInputType.emailAddress,
+                ),
+                SizedBox(height: screenWidth * 0.05),
+                TextField(
+                  controller: _mobileController,
+                  decoration: InputDecoration(
+                    labelText: 'Mobile Number',
+                    hintText: 'Enter your mobile number',
+                    prefixIcon: const Icon(Icons.phone),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
                 ),
                 SizedBox(height: screenWidth * 0.08),
                 SizedBox(

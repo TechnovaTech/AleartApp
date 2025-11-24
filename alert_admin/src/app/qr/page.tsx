@@ -183,7 +183,7 @@ export default function QRPage() {
                 </button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className={`${userQRs.length === 1 ? 'flex justify-center' : 'grid grid-cols-1 md:grid-cols-2'} gap-6`}>
                 {userQRs.map((qr) => (
                   <div key={qr._id} className="border rounded-lg p-4">
                     <div className="text-sm font-medium text-gray-900 mb-2">{qr.upiId}</div>
@@ -195,7 +195,7 @@ export default function QRPage() {
                 ))}
                 
                 {userQRs.length === 0 && (
-                  <div className="col-span-2 text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500">
                     No QR codes found for this user
                   </div>
                 )}

@@ -35,6 +35,7 @@ class ApiService {
     required String username,
     required String email,
     required String password,
+    required String mobile,
   }) async {
     final request = http.post(
       Uri.parse('$baseUrl/auth/register'),
@@ -43,6 +44,7 @@ class ApiService {
         'username': username,
         'email': email,
         'password': password,
+        'mobile': mobile,
       }),
     );
     

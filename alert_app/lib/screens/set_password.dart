@@ -5,11 +5,13 @@ import '../services/api_service.dart';
 class SetPasswordScreen extends StatefulWidget {
   final String email;
   final String username;
+  final String mobile;
 
   const SetPasswordScreen({
     super.key,
     required this.email,
     required this.username,
+    required this.mobile,
   });
 
   @override
@@ -63,6 +65,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       username: widget.username,
       email: widget.email,
       password: password,
+      mobile: widget.mobile,
     );
 
     setState(() {

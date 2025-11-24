@@ -17,11 +17,12 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect()
     
-    const { username, email, password } = await request.json()
+    const { username, email, password, mobile } = await request.json()
+    console.log('Registration data:', { username, email, mobile })
     
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !mobile) {
       return NextResponse.json(
-        { error: 'Username, email and password are required' },
+        { error: 'Username, email, password and mobile are required' },
         { status: 400, headers: corsHeaders }
       )
     }
@@ -43,11 +44,14 @@ export async function POST(request: NextRequest) {
       username,
       email,
       password: hashedPassword,
+      mobile,
       name: username,
       role: 'user'
     })
     
+    console.log('User before save:', user)
     await user.save()
+    console.log('User after save:', user)
     
     return NextResponse.json({
       success: true,
@@ -55,7 +59,8 @@ export async function POST(request: NextRequest) {
       user: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        mobile: user.mobile
       }
     }, { headers: corsHeaders })
     
