@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -22,8 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-
-  bool _isLoading = false;
 
   void _login() async {
     final email = _emailController.text;
@@ -67,67 +66,91 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
           'Login',
           style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: screenWidth * 0.045,
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue,
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
       ),
-      body: Container(
-        color: Colors.grey[100],
-        height: screenHeight,
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(screenWidth * 0.06),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24),
+          child: Container(
+            constraints: BoxConstraints(maxWidth: 400),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[600],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.person, size: 32, color: Colors.white),
+                ),
+                SizedBox(height: 24),
                 Text(
                   'Welcome Back',
                   style: TextStyle(
-                    fontSize: screenWidth * 0.07,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Colors.grey[800],
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.1),
+                SizedBox(height: 8),
+                Text(
+                  'Sign in to your account',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 32),
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     hintText: 'Enter your email',
-                    prefixIcon: const Icon(Icons.email),
+                    prefixIcon: Icon(Icons.email_outlined, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.blue[600]!),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
                 ),
-                SizedBox(height: screenWidth * 0.05),
+                SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: 'Enter your password',
-                    prefixIcon: const Icon(Icons.lock),
+                    prefixIcon: Icon(Icons.lock_outline, size: 20),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        size: 20,
                       ),
                       onPressed: () {
                         setState(() {
@@ -135,15 +158,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                     ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.blue[600]!),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.03),
+                SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -151,28 +182,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: screenWidth * 0.035,
+                        color: Colors.blue[600],
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.06),
+                SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  height: screenWidth * 0.13,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.blue[600],
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      elevation: 0,
                     ),
                     onPressed: _isLoading ? null : _login,
                     child: _isLoading
                         ? SizedBox(
-                            height: screenWidth * 0.05,
-                            width: screenWidth * 0.05,
+                            height: 20,
+                            width: 20,
                             child: const CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -181,20 +215,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         : Text(
                             'Login',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.04),
+                SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       "Don't have an account? ",
-                      style: TextStyle(fontSize: screenWidth * 0.035),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -206,9 +242,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'Sign Up',
                         style: TextStyle(
-                          color: Colors.blue,
-                          fontSize: screenWidth * 0.035,
-                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[600],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -267,81 +303,98 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
           'Forgot Password',
           style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: screenWidth * 0.045,
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue,
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
       ),
-      body: Container(
-        color: Colors.grey[100],
-        height: screenHeight,
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(screenWidth * 0.06),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24),
+          child: Container(
+            constraints: BoxConstraints(maxWidth: 400),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[600],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.lock_reset, size: 32, color: Colors.white),
+                ),
+                SizedBox(height: 24),
                 Text(
                   'Reset Password',
                   style: TextStyle(
-                    fontSize: screenWidth * 0.07,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Colors.grey[800],
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.04),
+                SizedBox(height: 8),
                 Text(
                   'Enter your email address and we will send you a link to reset your password.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: screenWidth * 0.035,
+                    fontSize: 14,
                     color: Colors.grey[600],
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.1),
+                SizedBox(height: 32),
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     hintText: 'Enter your email',
-                    prefixIcon: const Icon(Icons.email),
+                    prefixIcon: Icon(Icons.email_outlined, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.blue[600]!),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
                 ),
-                SizedBox(height: screenWidth * 0.08),
+                SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
-                  height: screenWidth * 0.13,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.blue[600],
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      elevation: 0,
                     ),
                     onPressed: _isLoading ? null : _resetPassword,
                     child: _isLoading
                         ? SizedBox(
-                            height: screenWidth * 0.05,
-                            width: screenWidth * 0.05,
+                            height: 20,
+                            width: 20,
                             child: const CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -350,22 +403,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         : Text(
                             'Send Reset Link',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                   ),
                 ),
-                SizedBox(height: screenWidth * 0.04),
+                SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Back to Login',
                     style: TextStyle(
-                      color: Colors.blue,
-                      fontSize: screenWidth * 0.035,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[600],
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

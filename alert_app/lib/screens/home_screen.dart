@@ -34,13 +34,11 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
 
   void _checkAndShowPermissions() async {
     final prefs = await SharedPreferences.getInstance();
-    // Reset for testing - remove this line in production
     await prefs.setBool('permissions_shown', false);
     
     final hasShownPermissions = prefs.getBool('permissions_shown') ?? false;
     
     if (!hasShownPermissions) {
-      // Show permission popup after a short delay
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           showModalBottomSheet(
@@ -53,7 +51,6 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
             ),
             builder: (context) => const ActivateAlertsBottomSheet(),
           ).then((_) async {
-            // Mark as shown so it doesn't appear again
             await prefs.setBool('permissions_shown', true);
           });
         }
@@ -124,103 +121,102 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
+        title: Row(
           children: [
-            Text(
-              'AlertPe Soundbox',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: screenWidth * 0.045,
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue[600],
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: Icon(Icons.speaker, color: Colors.white, size: 20),
             ),
-            Text(
-              'Online',
-              style: TextStyle(
-                color: Colors.yellow[600],
-                fontSize: screenWidth * 0.03,
-              ),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AlertPe Soundbox',
+                  style: TextStyle(
+                    color: Colors.grey[800],
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Online',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
         actions: [
-          Padding(
-            padding: EdgeInsets.all(screenWidth * 0.02),
-            child: GestureDetector(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const LanguagePopup(),
-                );
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: Colors.blue[300]!, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.035,
-                  vertical: screenWidth * 0.025,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'अ',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.01),
-                    Text(
-                      'A',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                  ],
-                ),
+          IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const LanguagePopup(),
+              );
+            },
+            icon: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('अ', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+                  Text('A', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+                ],
               ),
             ),
           ),
+          SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
           Container(
-            color: Colors.blue,
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04,
-              vertical: screenWidth * 0.03,
-            ),
+            color: Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _TabButton('Today', 0, screenWidth),
-                _TabButton('Yesterday', 1, screenWidth),
-                _TabButton('This Month', 2, screenWidth),
+                _TabButton('Today', 0),
+                SizedBox(width: 8),
+                _TabButton('Yesterday', 1),
+                SizedBox(width: 8),
+                _TabButton('This Month', 2),
               ],
             ),
           ),
+          Container(height: 1, color: Colors.grey[200]),
           Expanded(
             child: PageView(
               controller: _pageController,
@@ -230,9 +226,9 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                 });
               },
               children: [
-                _buildPage(0, screenWidth),
-                _buildPage(1, screenWidth),
-                _buildPage(2, screenWidth),
+                _buildPage(0),
+                _buildPage(1),
+                _buildPage(2),
               ],
             ),
           ),
@@ -261,135 +257,169 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     );
   }
 
-  Widget _buildPage(int index, double screenWidth) {
+  Widget _buildPage(int index) {
     DateTime? filterStart = tabFilters[index]?['start'];
     DateTime? filterEnd = tabFilters[index]?['end'];
     
     return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
       child: Column(
         children: [
           Container(
-            margin: EdgeInsets.all(screenWidth * 0.04),
-            padding: EdgeInsets.all(screenWidth * 0.04),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  getDate(index),
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.03,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                SizedBox(height: screenWidth * 0.02),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                    SizedBox(width: 8),
                     Text(
-                      getTitle(index),
+                      getDate(index),
                       style: TextStyle(
-                        fontSize: screenWidth * 0.045,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '₹0',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.07,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: screenWidth * 0.03),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReportsScreen(
-                          tabIndex: index,
-                          filterStartDate: filterStart,
-                          filterEndDate: filterEnd,
+                SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          getTitle(index),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(screenWidth * 0.03),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(8),
+                        SizedBox(height: 4),
+                        Text(
+                          'Total Collection',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      'OPEN REPORT',
-                      textAlign: TextAlign.center,
+                    Text(
+                      '₹0',
                       style: TextStyle(
-                        fontSize: screenWidth * 0.035,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1,
+                        color: Colors.blue[600],
                       ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReportsScreen(
+                            tabIndex: index,
+                            filterStartDate: filterStart,
+                            filterEndDate: filterEnd,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.assessment, size: 18),
+                    label: Text(
+                      'View Detailed Report',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[600],
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search by amount',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: screenWidth * 0.03),
-                GestureDetector(
-                  onTap: _openFilter,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.04,
-                      vertical: screenWidth * 0.03,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search by amount',
+                    prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 20),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.filter_list),
-                        SizedBox(width: screenWidth * 0.01),
-                        const Text('Filter'),
-                      ],
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
                     ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.blue[600]!),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
-              ],
-            ),
+              ),
+              SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: _openFilter,
+                icon: Icon(Icons.tune, size: 18),
+                label: Text('Filter'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.grey[700],
+                  side: BorderSide(color: Colors.grey[300]!),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ),
           if (filterStart != null && filterEnd != null)
             Container(
-              margin: EdgeInsets.all(screenWidth * 0.04),
-              padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.03,
-                vertical: screenWidth * 0.02,
-              ),
+              margin: EdgeInsets.only(top: 16),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.yellow[100],
+                color: Colors.blue[50],
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -397,58 +427,76 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                   Text(
                     'Filter: ${filterStart.day} Nov ${filterStart.year} - ${filterEnd.day} Nov ${filterEnd.year}',
                     style: TextStyle(
-                      fontSize: screenWidth * 0.03,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.blue[700],
                     ),
                   ),
                   GestureDetector(
                     onTap: _clearFilter,
-                    child: Icon(Icons.close, size: screenWidth * 0.045),
+                    child: Icon(Icons.close, size: 16, color: Colors.blue[700]),
                   ),
                 ],
               ),
             ),
-          SizedBox(height: screenWidth * 0.1),
-          Text(
-            'No payment history',
-            style: TextStyle(
-              fontSize: screenWidth * 0.04,
-              color: Colors.grey,
-            ),
+          SizedBox(height: 40),
+          Column(
+            children: [
+              Icon(Icons.receipt_long, size: 48, color: Colors.grey[400]),
+              SizedBox(height: 12),
+              Text(
+                'No payment history',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Payments will appear here once received',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: screenWidth * 0.1),
+          SizedBox(height: 40),
         ],
       ),
     );
   }
 
-  Widget _TabButton(String label, int index, double screenWidth) {
-    return GestureDetector(
-      onTap: () {
-        _pageController.animateToPage(
-          index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      },
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: screenWidth * 0.035,
-              fontWeight: FontWeight.bold,
+  Widget _TabButton(String label, int index) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: _selectedTab == index ? Colors.blue[600] : Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _selectedTab == index ? Colors.blue[600]! : Colors.grey[300]!,
             ),
           ),
-          if (_selectedTab == index)
-            Container(
-              margin: EdgeInsets.only(top: screenWidth * 0.01),
-              height: 3,
-              width: screenWidth * 0.1,
-              color: Colors.yellow[600],
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _selectedTab == index ? Colors.white : Colors.grey[700],
+              fontSize: 14,
+              fontWeight: _selectedTab == index ? FontWeight.w600 : FontWeight.w500,
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
