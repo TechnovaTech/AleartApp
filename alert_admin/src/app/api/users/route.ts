@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '../../../../lib/mongodb'
 import User from '../../../../models/User'
+import QRCode from '../../../../models/QRCode'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,9 +21,19 @@ export async function GET() {
       .select('-password')
       .sort({ createdAt: -1 })
     
+    const usersWithQRCount = await Promise.all(
+      users.map(async (user) => {
+        const qrCount = await QRCode.countDocuments({ userId: user._id.toString() })
+        return {
+          ...user.toObject(),
+          qrCount
+        }
+      })
+    )
+    
     return NextResponse.json({
       success: true,
-      users: users
+      users: usersWithQRCount
     }, { headers: corsHeaders })
     
   } catch (error) {

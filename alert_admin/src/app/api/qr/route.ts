@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '../../../../lib/mongodb';
-import mongoose from 'mongoose';
-
-const QRCodeSchema = new mongoose.Schema({
-  upiId: { type: String, required: true },
-  userId: { type: String, required: true },
-  qrData: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
-
-const QRCode = mongoose.models.QRCode || mongoose.model('QRCode', QRCodeSchema);
+import QRCode from '../../../../models/QRCode';
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,9 +1,3 @@
 {
-  "/api/qr/route": "app/api/qr/route.js",
-  "/api/auth/login/route": "app/api/auth/login/route.js",
-  "/users/page": "app/users/page.js",
-  "/qr/page": "app/qr/page.js",
-  "/analytics/page": "app/analytics/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/payments/page": "app/payments/page.js"
+  "/qr/page": "app/qr/page.js"
 }
