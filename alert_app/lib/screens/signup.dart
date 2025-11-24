@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'otp_verification.dart';
+import '../services/api_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -38,25 +39,16 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OTPVerificationScreen(
-            email: email,
-            username: username,
-          ),
+    // Skip to OTP verification (OTP is auto-accepted)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OTPVerificationScreen(
+          email: email,
+          username: username,
         ),
-      );
-    });
+      ),
+    );
   }
 
   @override

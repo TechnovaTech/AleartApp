@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
+import '../services/api_service.dart';
 
 class SetPasswordScreen extends StatefulWidget {
   final String email;
@@ -29,7 +30,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     super.dispose();
   }
 
-  void _createAccount() {
+  void _createAccount() async {
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
@@ -58,11 +59,17 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-      });
-      
+    final result = await ApiService.register(
+      username: widget.username,
+      email: widget.email,
+      password: password,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created successfully!')),
       );
@@ -72,7 +79,11 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
         MaterialPageRoute(builder: (context) => const HomeScreen()),
         (route) => false,
       );
-    });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Registration failed')),
+      );
+    }
   }
 
   @override
