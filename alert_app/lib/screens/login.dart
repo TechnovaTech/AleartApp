@@ -23,7 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  bool _isLoading = false;
+
+  void _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;
 
@@ -34,10 +36,26 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await ApiService.login(email: email, password: password);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success'] == true) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Login failed')),
+      );
+    }
   }
 
   void _forgotPassword() {
@@ -150,15 +168,24 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _login,
-                    child: Text(
-                      'Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.045,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? SizedBox(
+                            height: screenWidth * 0.05,
+                            width: screenWidth * 0.05,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'Login',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.045,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 SizedBox(height: screenWidth * 0.04),

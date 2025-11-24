@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_bottom_navbar.dart';
+import '../widgets/user_profile_widget.dart';
 import 'my_qr.dart';
 import 'language_popup.dart';
 import 'login.dart';
+import '../services/api_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -87,13 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSection('Profile Info', screenWidth),
-            _buildSettingItem(
-              Icons.person,
-              'Name',
-              'abc',
-              screenWidth,
-            ),
+            const UserProfileWidget(),
             SizedBox(height: screenWidth * 0.02),
             _buildSection('Subscription', screenWidth),
             _buildSubscriptionItem(screenWidth),
@@ -155,8 +151,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: const Text('Cancel'),
                       ),
                       TextButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
+                          await ApiService.logout();
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(builder: (context) => const LoginScreen()),

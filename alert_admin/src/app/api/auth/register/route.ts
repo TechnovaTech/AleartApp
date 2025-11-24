@@ -3,6 +3,16 @@ import dbConnect from '../../../../../lib/mongodb'
 import User from '../../../../../models/User'
 import bcrypt from 'bcryptjs'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 200, headers: corsHeaders })
+}
+
 export async function POST(request: NextRequest) {
   try {
     await dbConnect()
@@ -12,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!username || !email || !password) {
       return NextResponse.json(
         { error: 'Username, email and password are required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
     
@@ -23,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       return NextResponse.json(
         { error: 'User already exists' },
-        { status: 409 }
+        { status: 409, headers: corsHeaders }
       )
     }
     
@@ -47,12 +57,12 @@ export async function POST(request: NextRequest) {
         username: user.username,
         email: user.email
       }
-    })
+    }, { headers: corsHeaders })
     
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
