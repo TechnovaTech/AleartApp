@@ -35,6 +35,13 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: 'Account has been blocked. Please contact support.' },
+        { status: 403, headers: corsHeaders }
+      )
+    }
+    
     const isPasswordValid = await bcrypt.compare(password, user.password)
     
     if (!isPasswordValid) {

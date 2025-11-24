@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Filter, Eye, Ban, CheckCircle, XCircle } from 'lucide-react'
+import { Search, Filter, Eye, Ban, CheckCircle, XCircle, Trash2, X } from 'lucide-react'
 
 interface User {
   _id: string
@@ -20,6 +20,11 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -37,6 +42,71 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
+
+  const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
+    // Update UI immediately
+    if (selectedUser && selectedUser._id === userId) {
+      setSelectedUser({...selectedUser, isActive: !currentStatus})
+    }
+    
+    setActionLoading(true)
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus })
+      })
+      if (response.ok) {
+        await fetchUsers()
+        showNotification('success', `User ${!currentStatus ? 'unblocked' : 'blocked'} successfully`)
+      } else {
+        // Revert UI change on error
+        if (selectedUser && selectedUser._id === userId) {
+          setSelectedUser({...selectedUser, isActive: currentStatus})
+        }
+        showNotification('error', 'Failed to update user status')
+      }
+    } catch (error) {
+      // Revert UI change on error
+      if (selectedUser && selectedUser._id === userId) {
+        setSelectedUser({...selectedUser, isActive: currentStatus})
+      }
+      showNotification('error', 'Network error occurred')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const deleteUser = async (userId: string) => {
+    setActionLoading(true)
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE'
+      })
+      if (response.ok) {
+        await fetchUsers()
+        setShowModal(false)
+        setShowDeleteConfirm(false)
+        showNotification('success', 'User deleted successfully')
+      } else {
+        showNotification('error', 'Failed to delete user')
+      }
+    } catch (error) {
+      showNotification('error', 'Network error occurred')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const viewUserDetails = (user: User) => {
+    setSelectedUser(user)
+    setShowModal(true)
   }
 
   const formatDate = (dateString: string) => {
@@ -197,15 +267,33 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900">
+                        <button 
+                          onClick={() => viewUserDetails(user)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View Details"
+                        >
                           <Eye size={16} />
                         </button>
-                        <button className={`${
-                          user.isActive 
-                            ? 'text-red-600 hover:text-red-900' 
-                            : 'text-green-600 hover:text-green-900'
-                        }`}>
+                        <button 
+                          onClick={() => toggleUserStatus(user._id, user.isActive)}
+                          className={`${
+                            user.isActive 
+                              ? 'text-red-600 hover:text-red-900' 
+                              : 'text-green-600 hover:text-green-900'
+                          }`}
+                          title={user.isActive ? 'Block User' : 'Unblock User'}
+                        >
                           {user.isActive ? <Ban size={16} /> : <CheckCircle size={16} />}
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setSelectedUser(user)
+                            setShowDeleteConfirm(true)
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete User"
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -216,6 +304,142 @@ export default function UsersPage() {
           </table>
         </div>
       </div>
+
+      {/* User Details Modal */}
+      {showModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">User Details</h2>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <div className="h-16 w-16 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">
+                    {selectedUser.name.charAt(0) || selectedUser.username.charAt(0)}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{selectedUser.name || selectedUser.username}</h3>
+                  <p className="text-gray-600">@{selectedUser.username}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Email</label>
+                  <p className="text-sm text-gray-900">{selectedUser.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Role</label>
+                  <p className="text-sm text-gray-900 capitalize">{selectedUser.role}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Subscription</label>
+                  <p className="text-sm text-gray-900 capitalize">{selectedUser.subscription}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedUser.isActive 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {selectedUser.isActive ? 'Active' : 'Blocked'}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Joined</label>
+                  <p className="text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Last Login</label>
+                  <p className="text-sm text-gray-900">{getTimeAgo(selectedUser.lastLogin)}</p>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2 pt-4">
+                <button 
+                  onClick={() => toggleUserStatus(selectedUser._id, selectedUser.isActive)}
+                  disabled={actionLoading}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium disabled:opacity-50 ${
+                    selectedUser.isActive 
+                      ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                      : 'bg-green-100 text-green-700 hover:bg-green-200'
+                  }`}
+                >
+                  {actionLoading ? 'Processing...' : (selectedUser.isActive ? 'Block User' : 'Unblock User')}
+                </button>
+                <button 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50"
+                >
+                  Delete User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Delete User</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete <strong>{selectedUser.name || selectedUser.username}</strong>? This action cannot be undone.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => deleteUser(selectedUser._id)}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50"
+                >
+                  {actionLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {notification.type === 'success' ? (
+              <CheckCircle size={20} />
+            ) : (
+              <XCircle size={20} />
+            )}
+            <span>{notification.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
