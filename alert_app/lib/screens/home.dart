@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'language_popup.dart';
-import 'activate_alerts_popup.dart';
 import 'home_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -226,21 +225,9 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                      ),
-                      builder: (context) => ActivateAlertsBottomSheet(
-                        onOk: () {
-                          Navigator.pop(context);
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const HomeScreenMain()),
-                          );
-                        },
-                      ),
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomeScreenMain()),
                     );
                   },
                   child: const Text(
@@ -298,146 +285,4 @@ class PaymentLogo extends StatelessWidget {
   }
 }
 
-class ActivateAlertsBottomSheet extends StatelessWidget {
-  final VoidCallback onOk;
 
-  const ActivateAlertsBottomSheet({required this.onOk});
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Activate Alerts',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 24),
-            _AlertItem(
-              icon: Icons.notifications,
-              title: 'Notification Listener',
-              subtitle: 'Read UPI payment notifications',
-              action: 'Turn On',
-            ),
-            const SizedBox(height: 16),
-            _AlertItem(
-              icon: Icons.music_note,
-              title: 'Post Notifications',
-              subtitle: 'Show payment alerts',
-              action: 'Turn On',
-            ),
-            const SizedBox(height: 16),
-            _AlertItem(
-              icon: Icons.battery_full,
-              title: 'Battery Optimization',
-              subtitle: 'Running without restrictions',
-              action: 'Turn On',
-            ),
-            const SizedBox(height: 16),
-            _AlertItem(
-              icon: Icons.volume_up,
-              title: 'Volume Check',
-              subtitle: 'Ensure volume is at least 60%',
-              action: 'Turn On',
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[400],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                ),
-                onPressed: onOk,
-                child: const Text(
-                  'OK',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AlertItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String action;
-
-  const _AlertItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.action,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 32, color: Colors.grey[600]),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          action,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-        const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.blue),
-      ],
-    );
-  }
-}

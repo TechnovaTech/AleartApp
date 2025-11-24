@@ -4,7 +4,9 @@ import 'filter_popup.dart';
 import 'reports_screen.dart';
 import 'my_qr.dart';
 import 'settings_screen.dart';
+import '../widgets/activate_alerts_bottom_sheet.dart';
 import '../widgets/custom_bottom_navbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreenMain extends StatefulWidget {
   const HomeScreenMain({super.key});
@@ -27,6 +29,36 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _checkAndShowPermissions();
+  }
+
+  void _checkAndShowPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Reset for testing - remove this line in production
+    await prefs.setBool('permissions_shown', false);
+    
+    final hasShownPermissions = prefs.getBool('permissions_shown') ?? false;
+    
+    if (!hasShownPermissions) {
+      // Show permission popup after a short delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            isDismissible: false,
+            enableDrag: false,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => const ActivateAlertsBottomSheet(),
+          ).then((_) async {
+            // Mark as shown so it doesn't appear again
+            await prefs.setBool('permissions_shown', true);
+          });
+        }
+      });
+    }
   }
 
   @override
