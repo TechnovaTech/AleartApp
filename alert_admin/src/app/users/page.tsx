@@ -25,6 +25,8 @@ export default function UsersPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -124,6 +126,37 @@ export default function UsersPage() {
     return `${diffInDays} days ago`
   }
 
+  const handleBulkAction = async (action: 'unblock' | 'delete') => {
+    if (selectedUsers.length === 0) return
+    
+    setActionLoading(true)
+    try {
+      const promises = selectedUsers.map(userId => {
+        if (action === 'unblock') {
+          return fetch(`/api/users/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isActive: true })
+          })
+        } else {
+          return fetch(`/api/users/${userId}`, {
+            method: 'DELETE'
+          })
+        }
+      })
+      
+      await Promise.all(promises)
+      await fetchUsers()
+      setSelectedUsers([])
+      setIsSelectionMode(false)
+      showNotification('success', `${selectedUsers.length} user${selectedUsers.length > 1 ? 's' : ''} ${action === 'unblock' ? 'unblocked' : 'deleted'} successfully`)
+    } catch (error) {
+      showNotification('error', `Failed to ${action} selected users`)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,27 +203,66 @@ export default function UsersPage() {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search users by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex flex-1 gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="blocked">Blocked</option>
+            </select>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <button
+            onClick={() => {
+              setIsSelectionMode(!isSelectionMode)
+              setSelectedUsers([])
+            }}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              isSelectionMode 
+                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+            }`}
           >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="blocked">Blocked</option>
-          </select>
+            {isSelectionMode ? 'Cancel Selection' : 'Select Users'}
+          </button>
         </div>
+        
+        {isSelectionMode && selectedUsers.length > 0 && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-blue-700">
+                {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleBulkAction('unblock')}
+                  className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                >
+                  Unblock Selected
+                </button>
+                <button
+                  onClick={() => handleBulkAction('delete')}
+                  className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                >
+                  Delete Selected
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Users Table */}
@@ -199,6 +271,22 @@ export default function UsersPage() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
+                {isSelectionMode && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedUsers(filteredUsers.map(u => u._id))
+                        } else {
+                          setSelectedUsers([])
+                        }
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
@@ -224,6 +312,22 @@ export default function UsersPage() {
               ) : (
                 filteredUsers.map((user) => (
                   <tr key={user._id} className="hover:bg-gray-50">
+                    {isSelectionMode && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.includes(user._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUsers([...selectedUsers, user._id])
+                            } else {
+                              setSelectedUsers(selectedUsers.filter(id => id !== user._id))
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
