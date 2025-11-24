@@ -1,9 +1,8 @@
 {
-  "/api/users/[id]/route": "app/api/users/[id]/route.js",
-  "/api/users/route": "app/api/users/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
   "/users/page": "app/users/page.js",
   "/qr/page": "app/qr/page.js",
+  "/settings/page": "app/settings/page.js",
   "/plans/page": "app/plans/page.js",
-  "/analytics/page": "app/analytics/page.js",
-  "/settings/page": "app/settings/page.js"
+  "/analytics/page": "app/analytics/page.js"
 }
