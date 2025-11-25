@@ -4,6 +4,7 @@ import '../widgets/user_profile_widget.dart';
 import '../widgets/language_button.dart';
 import 'my_qr.dart';
 import 'login.dart';
+import 'plans_screen.dart';
 import '../services/api_service.dart';
 import '../services/localization_service.dart';
 
@@ -242,50 +243,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSubscriptionItem(double screenWidth) {
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.04,
-        vertical: screenWidth * 0.02,
-      ),
-      padding: EdgeInsets.all(screenWidth * 0.03),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.card_giftcard, color: Colors.blue, size: screenWidth * 0.06),
-          SizedBox(width: screenWidth * 0.03),
-          Expanded(
-            child: Text(
-              LocalizationService.translate('alertpe_soundbox'),
-              style: TextStyle(
-                fontSize: screenWidth * 0.035,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const PlansScreen()),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.04,
+          vertical: screenWidth * 0.02,
+        ),
+        padding: EdgeInsets.all(screenWidth * 0.03),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.card_giftcard, color: Colors.blue, size: screenWidth * 0.06),
+            SizedBox(width: screenWidth * 0.03),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Plans & Subscription',
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.035,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    'Manage your subscription',
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.03,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.03,
-              vertical: screenWidth * 0.01,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              LocalizationService.translate('soon'),
-              style: TextStyle(
-                fontSize: screenWidth * 0.03,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+            Icon(Icons.arrow_forward_ios, size: screenWidth * 0.04, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

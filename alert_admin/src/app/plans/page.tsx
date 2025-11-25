@@ -1,249 +1,343 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'
+import { Plus, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+
+interface Plan {
+  _id: string
+  name: string
+  monthlyPrice: number
+  yearlyPrice: number
+  features: string[]
+  isActive: boolean
+  createdAt: string
+}
 
 export default function PlansPage() {
-  const [activeTab, setActiveTab] = useState('plans');
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const plans = [
-    { id: 1, name: 'Basic', price: 99, duration: 'Monthly', users: 156, status: 'Active' },
-    { id: 2, name: 'Pro', price: 299, duration: 'Monthly', users: 89, status: 'Active' },
-    { id: 3, name: 'Enterprise', price: 999, duration: 'Monthly', users: 23, status: 'Active' },
-  ];
+  useEffect(() => {
+    fetchPlans()
+  }, [])
 
-  const subscriptions = [
-    { id: 1, user: 'John Doe', plan: 'Pro', startDate: '2024-01-15', endDate: '2024-02-15', status: 'Active', amount: 299 },
-    { id: 2, user: 'Jane Smith', plan: 'Basic', startDate: '2024-01-10', endDate: '2024-02-10', status: 'Expiring', amount: 99 },
-    { id: 3, user: 'Mike Johnson', plan: 'Enterprise', startDate: '2024-01-01', endDate: '2024-02-01', status: 'Active', amount: 999 },
-  ];
+  const fetchPlans = async () => {
+    try {
+      const response = await fetch('/api/plans')
+      const data = await response.json()
+      if (data.success) {
+        setPlans(data.plans)
+      }
+    } catch (error) {
+      console.error('Failed to fetch plans:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const togglePlanStatus = async (planId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/plans/${planId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus })
+      })
+      
+      if (response.ok) {
+        fetchPlans()
+      }
+    } catch (error) {
+      console.error('Failed to toggle plan status:', error)
+    }
+  }
+
+  const deletePlan = async (planId: string) => {
+    if (confirm('Are you sure you want to delete this plan?')) {
+      try {
+        const response = await fetch(`/api/plans/${planId}`, {
+          method: 'DELETE'
+        })
+        
+        if (response.ok) {
+          fetchPlans()
+        }
+      } catch (error) {
+        console.error('Failed to delete plan:', error)
+      }
+    }
+  }
+
+  const openEditForm = (plan: Plan) => {
+    setEditingPlan(plan)
+    setShowForm(true)
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingPlan(null)
+  }
+
+  if (loading) {
+    return <div className="p-6">Loading...</div>
+  }
 
   return (
     <div className="p-6">
-      <div className="flex justify-end items-center mb-6">
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Create New Plan
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Plans Management</h1>
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+        >
+          <Plus size={20} />
+          Add Plan
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab('plans')}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'plans' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          Plans Management
-        </button>
-        <button
-          onClick={() => setActiveTab('subscriptions')}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'subscriptions' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          Active Subscriptions
-        </button>
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'analytics' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-          }`}
-        >
-          Revenue Analytics
-        </button>
-      </div>
-
-      {/* Plans Management */}
-      {activeTab === 'plans' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan) => (
-              <div key={plan.id} className="bg-white rounded-lg shadow-md p-6 border">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold text-gray-800">{plan.name}</h3>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    plan.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {plan.status}
-                  </span>
-                </div>
-                <div className="mb-4">
-                  <span className="text-3xl font-bold text-blue-600">₹{plan.price}</span>
-                  <span className="text-gray-600">/{plan.duration}</span>
-                </div>
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600">{plan.users} active subscribers</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
-                    Edit Plan
-                  </button>
-                  <button className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                    ⚙️
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Active Subscriptions */}
-      {activeTab === 'subscriptions' && (
-        <div className="bg-white rounded-lg shadow-md">
-          <div className="p-6 border-b">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Active Subscriptions</h2>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="Search subscriptions..."
-                  className="px-3 py-2 border border-gray-300 rounded-md"
-                />
-                <select className="px-3 py-2 border border-gray-300 rounded-md">
-                  <option>All Status</option>
-                  <option>Active</option>
-                  <option>Expiring</option>
-                  <option>Expired</option>
-                </select>
-              </div>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl">
+        {plans.map((plan) => (
+          <div key={plan._id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-md relative w-full max-w-sm">
+            <div className="absolute top-4 right-4 flex gap-2">
+              <button
+                onClick={() => togglePlanStatus(plan._id, plan.isActive)}
+                className={`p-2 rounded-lg transition-colors ${
+                  plan.isActive 
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+                title={plan.isActive ? 'Disable Plan' : 'Enable Plan'}
+              >
+                {plan.isActive ? (
+                  <ToggleRight size={20} />
+                ) : (
+                  <ToggleLeft size={20} />
+                )}
+              </button>
+              
+              <button
+                onClick={() => openEditForm(plan)}
+                className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                title="Edit Plan"
+              >
+                <Edit size={16} />
+              </button>
+              
+              <button
+                onClick={() => deletePlan(plan._id)}
+                className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                title="Delete Plan"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {subscriptions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{sub.user}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{sub.plan}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{sub.startDate}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{sub.endDate}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{sub.amount}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        sub.status === 'Active' ? 'bg-green-100 text-green-800' : 
-                        sub.status === 'Expiring' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {sub.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-3">View</button>
-                      <button className="text-green-600 hover:text-green-900 mr-3">Extend</button>
-                      <button className="text-red-600 hover:text-red-900">Cancel</button>
-                    </td>
-                  </tr>
+
+            <div className="pr-24">
+              <div className="flex items-center gap-3 mb-4">
+                <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  plan.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {plan.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-2xl font-bold text-blue-600">₹{plan.monthlyPrice}</span>
+                  <span className="text-gray-500 text-sm">/month</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-green-600">₹{plan.yearlyPrice}</span>
+                  <span className="text-gray-500 text-sm">/year</span>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 text-sm">{feature}</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Revenue Analytics */}
-      {activeTab === 'analytics' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-sm font-medium text-gray-500">Monthly Revenue</h3>
-              <p className="text-2xl font-bold text-green-600">₹45,230</p>
-              <p className="text-sm text-green-600">+12.5% from last month</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-sm font-medium text-gray-500">Active Subscriptions</h3>
-              <p className="text-2xl font-bold text-blue-600">268</p>
-              <p className="text-sm text-blue-600">+8 new this month</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-sm font-medium text-gray-500">Churn Rate</h3>
-              <p className="text-2xl font-bold text-red-600">3.2%</p>
-              <p className="text-sm text-red-600">-0.5% from last month</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-sm font-medium text-gray-500">Avg. Revenue Per User</h3>
-              <p className="text-2xl font-bold text-purple-600">₹169</p>
-              <p className="text-sm text-purple-600">+₹12 from last month</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold mb-4">Plan Distribution</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span>Basic Plan</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{width: '58%'}}></div>
-                    </div>
-                    <span className="text-sm">58%</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Pro Plan</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{width: '33%'}}></div>
-                    </div>
-                    <span className="text-sm">33%</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Enterprise</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '9%'}}></div>
-                    </div>
-                    <span className="text-sm">9%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">John Doe - Pro Plan</p>
-                    <p className="text-sm text-gray-500">2 hours ago</p>
-                  </div>
-                  <span className="text-green-600 font-medium">+₹299</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">Sarah Wilson - Basic Plan</p>
-                    <p className="text-sm text-gray-500">5 hours ago</p>
-                  </div>
-                  <span className="text-green-600 font-medium">+₹99</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <div>
-                    <p className="font-medium">Mike Chen - Enterprise</p>
-                    <p className="text-sm text-gray-500">1 day ago</p>
-                  </div>
-                  <span className="text-green-600 font-medium">+₹999</span>
-                </div>
               </div>
             </div>
           </div>
-        </div>
+        ))}
+      </div>
+
+      {showForm && (
+        <PlanForm
+          plan={editingPlan}
+          onClose={closeForm}
+          onSuccess={() => {
+            fetchPlans()
+            closeForm()
+          }}
+        />
       )}
     </div>
-  );
+  )
+}
+
+function PlanForm({ plan, onClose, onSuccess }: {
+  plan: Plan | null
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [formData, setFormData] = useState({
+    name: plan?.name || '',
+    monthlyPrice: plan?.monthlyPrice || 0,
+    yearlyPrice: plan?.yearlyPrice || 0,
+    features: plan?.features || ['']
+  })
+  const [loading, setLoading] = useState(false)
+
+  const addFeature = () => {
+    setFormData(prev => ({
+      ...prev,
+      features: [...prev.features, '']
+    }))
+  }
+
+  const updateFeature = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.map((f, i) => i === index ? value : f)
+    }))
+  }
+
+  const removeFeature = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index)
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const filteredFeatures = formData.features.filter(f => f.trim())
+      const url = plan ? `/api/plans/${plan._id}` : '/api/plans'
+      const method = plan ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          features: filteredFeatures
+        })
+      })
+
+      if (response.ok) {
+        onSuccess()
+      }
+    } catch (error) {
+      console.error('Failed to save plan:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-xl font-bold mb-4">
+          {plan ? 'Edit Plan' : 'Add New Plan'}
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Plan Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full p-2 border rounded-lg"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Monthly Price (₹)</label>
+              <input
+                type="number"
+                value={formData.monthlyPrice}
+                onChange={(e) => setFormData(prev => ({ ...prev, monthlyPrice: Number(e.target.value) }))}
+                className="w-full p-2 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Yearly Price (₹)</label>
+              <input
+                type="number"
+                value={formData.yearlyPrice}
+                onChange={(e) => setFormData(prev => ({ ...prev, yearlyPrice: Number(e.target.value) }))}
+                className="w-full p-2 border rounded-lg"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Features</label>
+            {formData.features.map((feature, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={feature}
+                  onChange={(e) => updateFeature(index, e.target.value)}
+                  className="flex-1 p-2 border rounded-lg"
+                  placeholder="Enter feature"
+                />
+                {formData.features.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeFeature(index)}
+                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addFeature}
+              className="text-blue-600 text-sm hover:underline"
+            >
+              + Add Feature
+            </button>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Saving...' : (plan ? 'Update' : 'Create')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
