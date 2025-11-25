@@ -580,6 +580,10 @@ class LocalizationService {
     await prefs.setString(_languageKey, language);
   }
 
+  static void notifyLanguageChange() {
+    // This will be used to notify widgets of language changes
+  }
+
   static String translate(String key) {
     return _translations[_currentLanguage]?[key] ?? key;
   }

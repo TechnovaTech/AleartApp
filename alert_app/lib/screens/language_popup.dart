@@ -124,14 +124,15 @@ class _LanguagePopupState extends State<LanguagePopup> {
                 ),
                 onPressed: () async {
                   await LocalizationService.setLanguage(selectedLanguage);
+                  
+                  // Close popup first
                   Navigator.pop(context);
                   
-                  // Restart the app
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MyApp()),
-                    (route) => false,
-                  );
+                  // Small delay then restart app
+                  await Future.delayed(Duration(milliseconds: 100));
+                  
+                  // Complete app restart
+                  runApp(const MyApp());
                 },
                 child: Text(
                   LocalizationService.translate('save'),
