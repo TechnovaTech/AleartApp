@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/localization_service.dart';
+import '../services/api_service.dart';
+import '../models/plan.dart';
 import '../widgets/language_button.dart';
 
 class PlansScreen extends StatefulWidget {
@@ -11,12 +13,72 @@ class PlansScreen extends StatefulWidget {
 
 class _PlansScreenState extends State<PlansScreen> {
   String currentPlan = 'free';
+  List<Plan> plans = [];
+  bool isLoading = true;
   
   @override
   void initState() {
     super.initState();
     LocalizationService.loadLanguage().then((_) {
       if (mounted) setState(() {});
+    });
+    _loadPlans();
+  }
+  
+  Future<void> _loadPlans() async {
+    try {
+      final result = await ApiService.getPlans();
+      if (result['success'] == true && result['plans'] != null) {
+        setState(() {
+          plans = (result['plans'] as List)
+              .map((planJson) => Plan.fromJson(planJson))
+              .where((plan) => plan.isActive)
+              .toList();
+          isLoading = false;
+        });
+      } else {
+        _setFallbackPlans();
+      }
+    } catch (e) {
+      _setFallbackPlans();
+    }
+  }
+  
+  void _setFallbackPlans() {
+    setState(() {
+      plans = [
+        Plan(
+          id: 'free',
+          name: 'Free Plan',
+          monthlyPrice: 0,
+          yearlyPrice: 0,
+          features: [
+            'Basic UPI payment alerts',
+            'Up to 2 QR codes',
+            'Standard notification sounds',
+            'Email support',
+          ],
+          isActive: true,
+        ),
+        Plan(
+          id: 'premium',
+          name: 'Premium Plan',
+          monthlyPrice: 99,
+          yearlyPrice: 999,
+          features: [
+            'Advanced UPI payment alerts',
+            'Unlimited QR codes',
+            'Custom notification sounds',
+            'Real-time transaction tracking',
+            'Priority customer support',
+            'Advanced analytics & reports',
+            'Multi-device sync',
+            'Ad-free experience',
+          ],
+          isActive: true,
+        ),
+      ];
+      isLoading = false;
     });
   }
 
@@ -42,7 +104,9 @@ class _PlansScreenState extends State<PlansScreen> {
           LanguageButton(),
         ],
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,51 +181,29 @@ class _PlansScreenState extends State<PlansScreen> {
             
             SizedBox(height: 16),
             
-            // Free Plan Card
-            _PlanCard(
-              title: 'Free Plan',
-              price: '₹0',
-              period: '/month',
-              features: [
-                'Basic UPI payment alerts',
-                'Up to 2 QR codes',
-                'Standard notification sounds',
-                'Email support',
+            // Dynamic Plan Cards
+            ...plans.map((plan) => Column(
+              children: [
+                _PlanCard(
+                  title: plan.name,
+                  price: '₹${plan.monthlyPrice.toInt()}',
+                  period: '/month',
+                  features: plan.features,
+                  isCurrentPlan: currentPlan == plan.id,
+                  isPremium: plan.monthlyPrice > 0,
+                  onTap: () {
+                    if (currentPlan != plan.id) {
+                      if (plan.monthlyPrice > 0) {
+                        _showUpgradeDialog(plan);
+                      } else {
+                        _showDowngradeDialog();
+                      }
+                    }
+                  },
+                ),
+                SizedBox(height: 16),
               ],
-              isCurrentPlan: currentPlan == 'free',
-              isPremium: false,
-              onTap: () {
-                if (currentPlan != 'free') {
-                  _showDowngradeDialog();
-                }
-              },
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Premium Plan Card
-            _PlanCard(
-              title: 'Premium Plan',
-              price: '₹99',
-              period: '/month',
-              features: [
-                'Advanced UPI payment alerts',
-                'Unlimited QR codes',
-                'Custom notification sounds',
-                'Real-time transaction tracking',
-                'Priority customer support',
-                'Advanced analytics & reports',
-                'Multi-device sync',
-                'Ad-free experience',
-              ],
-              isCurrentPlan: currentPlan == 'premium',
-              isPremium: true,
-              onTap: () {
-                if (currentPlan != 'premium') {
-                  _showUpgradeDialog();
-                }
-              },
-            ),
+            )).toList(),
             
             SizedBox(height: 24),
             
@@ -366,12 +408,12 @@ class _PlansScreenState extends State<PlansScreen> {
     );
   }
 
-  void _showUpgradeDialog() {
+  void _showUpgradeDialog(Plan plan) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Upgrade to Premium'),
-        content: Text('Unlock all premium features for just ₹99/month. Continue?'),
+        title: Text('Upgrade to ${plan.name}'),
+        content: Text('Unlock all premium features for just ₹${plan.monthlyPrice.toInt()}/month. Continue?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -380,7 +422,7 @@ class _PlansScreenState extends State<PlansScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _processPurchase();
+              _processPurchase(plan);
             },
             child: Text('Upgrade'),
           ),
@@ -417,7 +459,7 @@ class _PlansScreenState extends State<PlansScreen> {
     );
   }
 
-  void _processPurchase() {
+  void _processPurchase(Plan plan) {
     // Simulate purchase process
     showDialog(
       context: context,
@@ -437,11 +479,11 @@ class _PlansScreenState extends State<PlansScreen> {
     Future.delayed(Duration(seconds: 2), () {
       Navigator.pop(context);
       setState(() {
-        currentPlan = 'premium';
+        currentPlan = plan.id;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Successfully upgraded to Premium!'),
+          content: Text('Successfully upgraded to ${plan.name}!'),
           backgroundColor: Colors.green,
         ),
       );

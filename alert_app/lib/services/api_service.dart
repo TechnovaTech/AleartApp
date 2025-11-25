@@ -168,4 +168,13 @@ class ApiService {
     
     return result;
   }
+  
+  static Future<Map<String, dynamic>> getPlans() async {
+    final request = http.get(
+      Uri.parse('$baseUrl/plans'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    
+    return await _handleRequest(request);
+  }
 }

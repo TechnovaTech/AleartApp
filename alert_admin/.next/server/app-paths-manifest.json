@@ -1,6 +1,5 @@
 {
   "/api/plans/route": "app/api/plans/route.js",
-  "/api/plans/[id]/route": "app/api/plans/[id]/route.js",
   "/plans/page": "app/plans/page.js",
   "/users/page": "app/users/page.js"
 }
