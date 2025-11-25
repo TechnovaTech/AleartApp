@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_bottom_navbar.dart';
 import '../widgets/user_profile_widget.dart';
+import '../widgets/language_button.dart';
 import 'my_qr.dart';
-import 'language_popup.dart';
 import 'login.dart';
 import '../services/api_service.dart';
+import '../services/localization_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,6 +16,14 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
+  void initState() {
+    super.initState();
+    LocalizationService.loadLanguage().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -24,65 +33,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          'Settings',
+          LocalizationService.translate('settings'),
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: screenWidth * 0.045,
           ),
         ),
-        actions: [
-          Padding(
-            padding: EdgeInsets.all(screenWidth * 0.02),
-            child: GestureDetector(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const LanguagePopup(),
-                );
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: Colors.blue[300]!, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.035,
-                  vertical: screenWidth * 0.025,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'अ',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.01),
-                    Text(
-                      'A',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        actions: const [
+          LanguageButton(),
         ],
       ),
       body: SingleChildScrollView(
@@ -91,49 +50,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const UserProfileWidget(),
             SizedBox(height: screenWidth * 0.02),
-            _buildSection('Subscription', screenWidth),
+            _buildSection(LocalizationService.translate('subscription'), screenWidth),
             _buildSubscriptionItem(screenWidth),
             SizedBox(height: screenWidth * 0.02),
-            _buildSection('Voice Settings', screenWidth),
+            _buildSection(LocalizationService.translate('voice_settings'), screenWidth),
             _buildSettingItem(
               Icons.music_note,
-              'Notification Sound',
+              LocalizationService.translate('notification_sound'),
               '',
               screenWidth,
             ),
             SizedBox(height: screenWidth * 0.02),
             _buildSettingItem(
               Icons.volume_up,
-              'Test Notification',
+              LocalizationService.translate('test_notification'),
               '',
               screenWidth,
             ),
             SizedBox(height: screenWidth * 0.02),
-            _buildSection('General', screenWidth),
+            _buildSection(LocalizationService.translate('general'), screenWidth),
             _buildSettingItem(
               Icons.notifications,
-              'Permissions',
+              LocalizationService.translate('permissions'),
               '',
               screenWidth,
             ),
             SizedBox(height: screenWidth * 0.02),
             _buildSettingItem(
               Icons.headset_mic,
-              'Contact Support',
+              LocalizationService.translate('contact_support'),
               '',
               screenWidth,
             ),
             SizedBox(height: screenWidth * 0.02),
             _buildSettingItem(
               Icons.security,
-              'Privacy Policy',
+              LocalizationService.translate('privacy_policy'),
               '',
               screenWidth,
             ),
             SizedBox(height: screenWidth * 0.02),
             _buildSettingItem(
               Icons.description,
-              'Terms of Service',
+              LocalizationService.translate('terms_of_service'),
               '',
               screenWidth,
             ),
@@ -143,12 +102,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to logout?'),
+                    title: Text(LocalizationService.translate('logout')),
+                    content: Text(LocalizationService.translate('logout_confirm')),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
+                        child: Text(LocalizationService.translate('cancel')),
                       ),
                       TextButton(
                         onPressed: () async {
@@ -160,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             (route) => false,
                           );
                         },
-                        child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                        child: Text(LocalizationService.translate('logout'), style: const TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
@@ -182,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icon(Icons.logout, color: Colors.white, size: screenWidth * 0.045),
                     SizedBox(width: screenWidth * 0.02),
                     Text(
-                      'Logout',
+                      LocalizationService.translate('logout'),
                       style: TextStyle(
                         fontSize: screenWidth * 0.035,
                         fontWeight: FontWeight.w600,
@@ -300,7 +259,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SizedBox(width: screenWidth * 0.03),
           Expanded(
             child: Text(
-              'AlertPe Soundbox',
+              LocalizationService.translate('alertpe_soundbox'),
               style: TextStyle(
                 fontSize: screenWidth * 0.035,
                 fontWeight: FontWeight.w500,
@@ -318,7 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'Soon',
+              LocalizationService.translate('soon'),
               style: TextStyle(
                 fontSize: screenWidth * 0.03,
                 fontWeight: FontWeight.w600,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/localization_service.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTap;
 
@@ -11,17 +12,30 @@ class CustomBottomNavBar extends StatelessWidget {
   });
 
   @override
+  State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
+}
+
+class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
+  @override
+  void initState() {
+    super.initState();
+    LocalizationService.loadLanguage().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.qr_code_2), label: 'My QR'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+      items: [
+        BottomNavigationBarItem(icon: const Icon(Icons.home), label: LocalizationService.translate('home')),
+        BottomNavigationBarItem(icon: const Icon(Icons.qr_code_2), label: LocalizationService.translate('my_qr_code')),
+        BottomNavigationBarItem(icon: const Icon(Icons.settings), label: LocalizationService.translate('settings')),
       ],
-      currentIndex: currentIndex,
+      currentIndex: widget.currentIndex,
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.grey,
-      onTap: onTap,
+      onTap: widget.onTap,
     );
   }
 }

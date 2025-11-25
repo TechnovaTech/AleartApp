@@ -2,9 +2,23 @@ import 'package:flutter/material.dart';
 import 'language_popup.dart';
 import 'home_screen.dart';
 import '../widgets/hero_carousel.dart';
+import '../services/localization_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    LocalizationService.loadLanguage().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +51,9 @@ class HomeScreen extends StatelessWidget {
               child: const Icon(Icons.volume_up, color: Colors.blue, size: 22),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'AlertPe Soundbox',
-              style: TextStyle(
+            Text(
+              LocalizationService.translate('alertpe_soundbox'),
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
@@ -129,10 +143,10 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      'Get instant UPI sound alerts for every payment',
+                    Text(
+                      LocalizationService.translate('instant_upi_alerts'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
@@ -160,9 +174,9 @@ class HomeScreen extends StatelessWidget {
                             child: Icon(Icons.check, color: Colors.green.shade600, size: 16),
                           ),
                           const SizedBox(width: 12),
-                          const Text(
-                            '100% SECURE',
-                            style: TextStyle(
+                          Text(
+                            LocalizationService.translate('secure'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
@@ -186,7 +200,7 @@ class HomeScreen extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            'GET ALERTS FROM',
+                            LocalizationService.translate('get_alerts_from'),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -272,11 +286,11 @@ class HomeScreen extends StatelessWidget {
                         MaterialPageRoute(builder: (context) => const HomeScreenMain()),
                       );
                     },
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Get Started',
+                          LocalizationService.translate('get_started'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,

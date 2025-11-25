@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/localization_service.dart';
+import '../main.dart';
 
 class LanguagePopup extends StatefulWidget {
   const LanguagePopup({super.key});
@@ -8,7 +10,7 @@ class LanguagePopup extends StatefulWidget {
 }
 
 class _LanguagePopupState extends State<LanguagePopup> {
-  String selectedLanguage = 'English';
+  String selectedLanguage = LocalizationService.currentLanguage;
 
   final List<Map<String, String>> languages = [
     {'code': 'En', 'name': 'English'},
@@ -37,9 +39,9 @@ class _LanguagePopupState extends State<LanguagePopup> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Select Language',
-              style: TextStyle(
+            Text(
+              LocalizationService.translate('select_language'),
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -120,12 +122,20 @@ class _LanguagePopupState extends State<LanguagePopup> {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.pop(context, selectedLanguage);
+                onPressed: () async {
+                  await LocalizationService.setLanguage(selectedLanguage);
+                  Navigator.pop(context);
+                  
+                  // Restart the app
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyApp()),
+                    (route) => false,
+                  );
                 },
-                child: const Text(
-                  'Save',
-                  style: TextStyle(
+                child: Text(
+                  LocalizationService.translate('save'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'language_popup.dart';
 import 'filter_popup.dart';
 import 'reports_screen.dart';
 import 'my_qr.dart';
 import 'settings_screen.dart';
 import '../widgets/activate_alerts_bottom_sheet.dart';
 import '../widgets/custom_bottom_navbar.dart';
+import '../widgets/language_button.dart';
+import '../services/localization_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreenMain extends StatefulWidget {
@@ -29,6 +30,9 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    LocalizationService.loadLanguage().then((_) {
+      if (mounted) setState(() {});
+    });
     _checkAndShowPermissions();
   }
 
@@ -82,11 +86,11 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
 
   String getTitle(int index) {
     if (index == 0) {
-      return 'Today\'s Collection';
+      return LocalizationService.translate('todays_collection');
     } else if (index == 1) {
-      return 'Yesterday\'s Collection';
+      return LocalizationService.translate('yesterdays_collection');
     } else {
-      return 'November Collection';
+      return LocalizationService.translate('november_collection');
     }
   }
 
@@ -142,7 +146,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'AlertPe Soundbox',
+                  LocalizationService.translate('alertpe_soundbox'),
                   style: TextStyle(
                     color: Colors.grey[800],
                     fontWeight: FontWeight.w600,
@@ -161,7 +165,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                     ),
                     SizedBox(width: 4),
                     Text(
-                      'Online',
+                      LocalizationService.translate('online'),
                       style: TextStyle(
                         color: Colors.green,
                         fontSize: 12,
@@ -174,31 +178,8 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => const LanguagePopup(),
-              );
-            },
-            icon: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('अ', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-                  Text('A', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(width: 8),
+        actions: const [
+          LanguageButton(),
         ],
       ),
       body: Column(
@@ -208,11 +189,11 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                _TabButton('Today', 0),
+                _TabButton(LocalizationService.translate('today'), 0),
                 SizedBox(width: 8),
-                _TabButton('Yesterday', 1),
+                _TabButton(LocalizationService.translate('yesterday'), 1),
                 SizedBox(width: 8),
-                _TabButton('This Month', 2),
+                _TabButton(LocalizationService.translate('this_month'), 2),
               ],
             ),
           ),
@@ -314,7 +295,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Total Collection',
+                          LocalizationService.translate('total_collection'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[500],
@@ -350,7 +331,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                     },
                     icon: Icon(Icons.assessment, size: 18),
                     label: Text(
-                      'View Detailed Report',
+                      LocalizationService.translate('view_detailed_report'),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -376,7 +357,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               Expanded(
                 child: TextField(
                   decoration: InputDecoration(
-                    hintText: 'Search by amount',
+                    hintText: LocalizationService.translate('search_by_amount'),
                     prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 20),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -400,7 +381,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               OutlinedButton.icon(
                 onPressed: _openFilter,
                 icon: Icon(Icons.tune, size: 18),
-                label: Text('Filter'),
+                label: Text(LocalizationService.translate('filter')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.grey[700],
                   side: BorderSide(color: Colors.grey[300]!),
@@ -445,7 +426,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               Icon(Icons.receipt_long, size: 48, color: Colors.grey[400]),
               SizedBox(height: 12),
               Text(
-                'No payment history',
+                LocalizationService.translate('no_payment_history'),
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
@@ -454,7 +435,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               ),
               SizedBox(height: 4),
               Text(
-                'Payments will appear here once received',
+                LocalizationService.translate('payments_will_appear'),
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[500],

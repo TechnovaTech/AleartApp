@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'otp_verification.dart';
 import '../services/api_service.dart';
+import '../services/localization_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -10,6 +11,11 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  @override
+  void initState() {
+    super.initState();
+    setState(() {});
+  }
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _mobileController = TextEditingController();
@@ -70,7 +76,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Sign Up',
+          LocalizationService.translate('sign_up'),
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -91,7 +97,7 @@ class _SignupScreenState extends State<SignupScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Create Account',
+                  LocalizationService.translate('create_account'),
                   style: TextStyle(
                     fontSize: screenWidth * 0.07,
                     fontWeight: FontWeight.bold,
@@ -102,8 +108,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextField(
                   controller: _usernameController,
                   decoration: InputDecoration(
-                    labelText: 'Username',
-                    hintText: 'Enter your username',
+                    labelText: LocalizationService.translate('username'),
+                    hintText: LocalizationService.translate('enter_username'),
                     prefixIcon: const Icon(Icons.person),
                     filled: true,
                     fillColor: Colors.white,
@@ -117,8 +123,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
+                    labelText: LocalizationService.translate('email'),
+                    hintText: LocalizationService.translate('enter_email'),
                     prefixIcon: const Icon(Icons.email),
                     filled: true,
                     fillColor: Colors.white,
@@ -133,8 +139,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextField(
                   controller: _mobileController,
                   decoration: InputDecoration(
-                    labelText: 'Mobile Number',
-                    hintText: 'Enter your mobile number',
+                    labelText: LocalizationService.translate('mobile_number'),
+                    hintText: LocalizationService.translate('enter_mobile'),
                     prefixIcon: const Icon(Icons.phone),
                     filled: true,
                     fillColor: Colors.white,
@@ -168,7 +174,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           )
                         : Text(
-                            'Send OTP',
+                            LocalizationService.translate('send_otp'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.045,
@@ -182,13 +188,13 @@ class _SignupScreenState extends State<SignupScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Already have an account? ',
+                      LocalizationService.translate('already_have_account') + ' ',
                       style: TextStyle(fontSize: screenWidth * 0.035),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        'Login',
+                        LocalizationService.translate('login'),
                         style: TextStyle(
                           color: Colors.blue,
                           fontSize: screenWidth * 0.035,

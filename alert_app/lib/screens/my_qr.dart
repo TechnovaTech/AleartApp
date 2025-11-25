@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import '../widgets/custom_bottom_navbar.dart';
+import '../widgets/language_button.dart';
 import '../services/api_service.dart';
+import '../services/localization_service.dart';
 import 'settings_screen.dart';
-import 'language_popup.dart';
 
 class MyQRScreen extends StatefulWidget {
   const MyQRScreen({super.key});
@@ -29,6 +30,9 @@ class _MyQRScreenState extends State<MyQRScreen> {
   @override
   void initState() {
     super.initState();
+    LocalizationService.loadLanguage().then((_) {
+      if (mounted) setState(() {});
+    });
     _loadRecentQRCodes();
   }
 
@@ -73,38 +77,15 @@ class _MyQRScreenState extends State<MyQRScreen> {
         shadowColor: Colors.black12,
         automaticallyImplyLeading: false,
         title: Text(
-          'My QR Code',
+          LocalizationService.translate('my_qr_code'),
           style: TextStyle(
             color: Colors.grey[800],
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => const LanguagePopup(),
-              );
-            },
-            icon: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('अ', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-                  Text('A', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(width: 8),
+        actions: const [
+          LanguageButton(),
         ],
       ),
       body: SingleChildScrollView(
@@ -115,7 +96,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
             // Last 2 Used UPI IDs
             if (_recentQRCodes.isNotEmpty) ...[
               Text(
-                'Last 2 Used UPI IDs',
+                LocalizationService.translate('last_2_used_upi'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -161,7 +142,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Tap to use',
+                            LocalizationService.translate('tap_to_use'),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -217,7 +198,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
                           ),
                           SizedBox(height: 16),
                           Text(
-                            'No QR Code Generated',
+                            LocalizationService.translate('no_qr_generated'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -234,7 +215,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
 
             // Generate QR Section
             Text(
-              'Generate Your Payment QR',
+              LocalizationService.translate('generate_payment_qr'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -245,7 +226,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
             TextField(
               controller: _upiControllers[_currentPage],
               decoration: InputDecoration(
-                hintText: 'Enter UPI ID (e.g., user@paytm)',
+                hintText: LocalizationService.translate('enter_upi_id'),
                 prefixIcon: Icon(Icons.account_balance_wallet, size: 20),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -329,7 +310,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
                         ),
                       )
                     : Text(
-                        'Generate QR Code',
+                        LocalizationService.translate('generate_qr_code'),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -358,7 +339,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'How to use QR Widget',
+                      LocalizationService.translate('how_to_use_qr'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

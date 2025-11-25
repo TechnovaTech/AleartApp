@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'set_password.dart';
+import '../services/localization_service.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
@@ -79,7 +80,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Verify OTP',
+          LocalizationService.translate('verify_otp'),
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -100,7 +101,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Enter OTP',
+                  LocalizationService.translate('enter_otp'),
                   style: TextStyle(
                     fontSize: screenWidth * 0.07,
                     fontWeight: FontWeight.bold,
@@ -109,7 +110,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 ),
                 SizedBox(height: screenWidth * 0.04),
                 Text(
-                  'We have sent a 6-digit OTP to',
+                  LocalizationService.translate('sent_otp_to'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: screenWidth * 0.035,
@@ -179,7 +180,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                             ),
                           )
                         : Text(
-                            'Verify OTP',
+                            LocalizationService.translate('verify_otp'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.045,
@@ -193,13 +194,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Didn't receive OTP? ",
+                      LocalizationService.translate('didnt_receive_otp') + ' ',
                       style: TextStyle(fontSize: screenWidth * 0.035),
                     ),
                     TextButton(
                       onPressed: _resendOTP,
                       child: Text(
-                        'Resend',
+                        LocalizationService.translate('resend'),
                         style: TextStyle(
                           color: Colors.blue,
                           fontSize: screenWidth * 0.035,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/localization_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -44,7 +45,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile', style: TextStyle(color: Colors.white)),
+        title: Text(LocalizationService.translate('profile'), style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -120,7 +121,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Account Details',
+                                  LocalizationService.translate('account_details'),
                                   style: TextStyle(
                                     fontSize: screenWidth * 0.045,
                                     fontWeight: FontWeight.bold,
@@ -143,14 +144,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               ],
                             ),
                             SizedBox(height: screenWidth * 0.03),
-                            _buildDetailRow('Email', userData!['email'], screenWidth),
+                            _buildDetailRow(LocalizationService.translate('email'), userData!['email'], screenWidth),
                             isEditing 
-                                ? _buildEditableRow('Mobile', _mobileController, screenWidth)
-                                : _buildDetailRow('Mobile', userData!['mobile'] ?? 'Not provided', screenWidth),
+                                ? _buildEditableRow(LocalizationService.translate('mobile_number'), _mobileController, screenWidth)
+                                : _buildDetailRow(LocalizationService.translate('mobile_number'), userData!['mobile'] ?? 'Not provided', screenWidth),
                             isEditing 
-                                ? _buildEditableRow('Username', _usernameController, screenWidth)
-                                : _buildDetailRow('Username', userData!['username'], screenWidth),
-                            _buildDetailRow('Status', 'Active', screenWidth),
+                                ? _buildEditableRow(LocalizationService.translate('username'), _usernameController, screenWidth)
+                                : _buildDetailRow(LocalizationService.translate('username'), userData!['username'], screenWidth),
+                            _buildDetailRow(LocalizationService.translate('status'), LocalizationService.translate('active'), screenWidth),
                           ],
                         ),
                       ),
@@ -175,7 +176,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Your UPI IDs',
+                              LocalizationService.translate('your_upi_ids'),
                               style: TextStyle(
                                 fontSize: screenWidth * 0.045,
                                 fontWeight: FontWeight.bold,
@@ -184,7 +185,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             SizedBox(height: screenWidth * 0.03),
                             if (userQRs.isEmpty)
                               Text(
-                                'No UPI IDs added yet',
+                                LocalizationService.translate('no_upi_added'),
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: screenWidth * 0.035,

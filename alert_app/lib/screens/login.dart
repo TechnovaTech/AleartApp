@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home.dart';
 import 'signup.dart';
 import '../services/api_service.dart';
+import '../services/localization_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,6 +13,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  @override
+  void initState() {
+    super.initState();
+    setState(() {});
+  }
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -70,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          'Login',
+          LocalizationService.translate('login'),
           style: TextStyle(
             color: Colors.grey[800],
             fontWeight: FontWeight.w600,
@@ -100,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 24),
                 Text(
-                  'Welcome Back',
+                  LocalizationService.translate('welcome_back'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -109,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Sign in to your account',
+                  LocalizationService.translate('sign_in_account'),
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -144,8 +150,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
+                    labelText: LocalizationService.translate('password'),
+                    hintText: LocalizationService.translate('enter_password'),
                     prefixIcon: Icon(Icons.lock_outline, size: 20),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -180,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton(
                     onPressed: _forgotPassword,
                     child: Text(
-                      'Forgot Password?',
+                      LocalizationService.translate('forgot_password'),
                       style: TextStyle(
                         color: Colors.blue[600],
                         fontSize: 14,
@@ -213,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           )
                         : Text(
-                            'Login',
+                            LocalizationService.translate('login'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -226,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      LocalizationService.translate('dont_have_account') + ' ',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -240,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: Text(
-                        'Sign Up',
+                        LocalizationService.translate('sign_up'),
                         style: TextStyle(
                           color: Colors.blue[600],
                           fontSize: 14,
