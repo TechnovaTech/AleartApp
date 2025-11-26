@@ -177,4 +177,34 @@ class ApiService {
     
     return await _handleRequest(request);
   }
+  
+  static Future<Map<String, dynamic>> sendOTP({
+    required String email,
+  }) async {
+    final request = http.post(
+      Uri.parse('$baseUrl/auth/send-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+      }),
+    );
+    
+    return await _handleRequest(request);
+  }
+  
+  static Future<Map<String, dynamic>> verifyOTP({
+    required String email,
+    required String otp,
+  }) async {
+    final request = http.post(
+      Uri.parse('$baseUrl/auth/verify-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'otp': otp,
+      }),
+    );
+    
+    return await _handleRequest(request);
+  }
 }

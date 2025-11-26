@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'set_password.dart';
 import '../services/localization_service.dart';
+import '../services/api_service.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
@@ -34,7 +35,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     super.dispose();
   }
 
-  void _verifyOTP() {
+  void _verifyOTP() async {
     String otp = _otpControllers.map((controller) => controller.text).join();
     
     if (otp.length != 6) {
@@ -48,11 +49,16 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-      });
-      
+    final result = await ApiService.verifyOTP(
+      email: widget.email,
+      otp: otp,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success'] == true) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -63,13 +69,25 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           ),
         ),
       );
-    });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Invalid OTP')),
+      );
+    }
   }
 
-  void _resendOTP() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('OTP sent to ${widget.email}')),
-    );
+  void _resendOTP() async {
+    final result = await ApiService.sendOTP(email: widget.email);
+    
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('OTP sent to ${widget.email}')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Failed to resend OTP')),
+      );
+    }
   }
 
   @override

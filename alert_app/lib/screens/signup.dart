@@ -29,7 +29,7 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _sendOTP() {
+  void _sendOTP() async {
     final username = _usernameController.text;
     final email = _emailController.text;
     final mobile = _mobileController.text;
@@ -55,17 +55,36 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    // Skip to OTP verification (OTP is auto-accepted)
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OTPVerificationScreen(
-          email: email,
-          username: username,
-          mobile: mobile,
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await ApiService.sendOTP(email: email);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('OTP sent to $email')),
+      );
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OTPVerificationScreen(
+            email: email,
+            username: username,
+            mobile: mobile,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Failed to send OTP')),
+      );
+    }
   }
 
   @override

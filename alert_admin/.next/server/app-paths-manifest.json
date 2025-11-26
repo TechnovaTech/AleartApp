@@ -1,5 +1,5 @@
 {
-  "/api/plans/route": "app/api/plans/route.js",
-  "/plans/page": "app/plans/page.js",
-  "/users/page": "app/users/page.js"
+  "/api/auth/send-otp/route": "app/api/auth/send-otp/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/auth/verify-otp/route": "app/api/auth/verify-otp/route.js"
 }
