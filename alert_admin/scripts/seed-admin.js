@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs')
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
+  mobile: { type: String, required: true },
   password: { type: String, required: true },
-  name: { type: String, default: '' },
   isActive: { type: Boolean, default: true },
   subscription: { type: String, enum: ['free', 'premium'], default: 'free' },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
@@ -17,7 +17,8 @@ const User = mongoose.model('User', UserSchema)
 
 async function seedAdmin() {
   try {
-    await mongoose.connect('mongodb://vivekvora:Technova%40990@72.60.30.153:27017/aleartapp?authSource=admin')
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://vivekvora:Technova%40990@72.60.30.153:27017/aleartapp?authSource=admin'
+    await mongoose.connect(mongoUri)
     
     const existingAdmin = await User.findOne({ email: 'admin@gmail.com' })
     
@@ -27,8 +28,8 @@ async function seedAdmin() {
       const admin = new User({
         username: 'admin',
         email: 'admin@gmail.com',
+        mobile: '1234567890',
         password: hashedPassword,
-        name: 'Administrator',
         role: 'admin'
       })
       
