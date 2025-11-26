@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Send OTP error:', error)
     return NextResponse.json(
-      { error: `Email sending failed: ${error.message}` },
+      { error: `Email sending failed: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500, headers: corsHeaders }
     )
   }
