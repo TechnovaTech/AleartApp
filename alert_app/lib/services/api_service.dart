@@ -258,20 +258,25 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> savePayment({
-    required String userId,
-    required String amount,
+    String? userId,
+    required double amount,
     required String paymentApp,
     required String payerName,
     required String upiId,
     required String transactionId,
     required String notificationText,
   }) async {
+    // Get userId from cache if not provided
+    if (userId == null) {
+      final userData = await getCachedUserData();
+      userId = userData?['id'] ?? '';
+    }
     final request = http.post(
       Uri.parse('$apiUrl/payments'),
       headers: _headers,
       body: jsonEncode({
         'userId': userId,
-        'amount': amount,
+        'amount': amount.toString(),
         'paymentApp': paymentApp,
         'payerName': payerName,
         'upiId': upiId,
