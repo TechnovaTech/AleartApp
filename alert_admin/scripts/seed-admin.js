@@ -17,7 +17,7 @@ const User = mongoose.model('User', UserSchema)
 
 async function seedAdmin() {
   try {
-    await mongoose.connect('mongodb://localhost:27017/aleartapp')
+    await mongoose.connect('mongodb://vivekvora:Technova%40990@72.60.30.153:27017/aleartapp?authSource=admin')
     
     const existingAdmin = await User.findOne({ email: 'admin@gmail.com' })
     
