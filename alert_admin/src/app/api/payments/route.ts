@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { connectDB } from '../../../../lib/mongodb'
+import dbConnect from '../../../../lib/mongodb'
 import Payment from '../../../../models/Payment'
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB()
+    await dbConnect()
     
     const body = await request.json()
     const { userId, amount, paymentApp, payerName, upiId, transactionId, notificationText } = body
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB()
+    await dbConnect()
     
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
