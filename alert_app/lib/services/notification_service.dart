@@ -46,10 +46,11 @@ class NotificationService {
     }
   }
   
-  // Parse UPI payment from notification text
-  static Map<String, String> parseUpiPayment(Map<String, dynamic> notification) {
-    String text = notification['text'] ?? '';
-    String packageName = notification['packageName'] ?? '';
+  // Parse UPI payment from SMS/notification text
+  static Map<String, String> parseUpiPayment(Map<String, dynamic> data) {
+    String text = data['text'] ?? data['message'] ?? '';
+    String sender = data['sender'] ?? '';
+    String packageName = data['packageName'] ?? '';
     
     // Extract amount using regex
     RegExp amountRegex = RegExp(r'₹\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false);
@@ -66,8 +67,8 @@ class NotificationService {
     Match? nameMatch = nameRegex.firstMatch(text);
     String payerName = nameMatch?.group(1)?.trim() ?? 'Unknown User';
     
-    // Get payment app name
-    String paymentApp = _getAppName(packageName);
+    // Get payment app name from package or sender
+    String paymentApp = packageName.isNotEmpty ? _getAppName(packageName) : _getAppNameFromSender(sender);
     
     return {
       'amount': amount,
@@ -93,6 +94,25 @@ class NotificationService {
         return 'Amazon Pay';
       default:
         return 'UPI Payment';
+    }
+  }
+  
+  static String _getAppNameFromSender(String sender) {
+    String senderUpper = sender.toUpperCase();
+    if (senderUpper.contains('GOOGLEPAY') || senderUpper.contains('GPAY')) {
+      return 'Google Pay';
+    } else if (senderUpper.contains('PHONEPE')) {
+      return 'PhonePe';
+    } else if (senderUpper.contains('PAYTM')) {
+      return 'Paytm';
+    } else if (senderUpper.contains('BHIM')) {
+      return 'BHIM UPI';
+    } else if (senderUpper.contains('AMAZON')) {
+      return 'Amazon Pay';
+    } else if (senderUpper.contains('UPI') || senderUpper.contains('BANK')) {
+      return 'Bank UPI';
+    } else {
+      return 'UPI Payment';
     }
   }
 }

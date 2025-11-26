@@ -58,11 +58,16 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
       _loadTodaysPayments();
     });
     
-    // Listen for UPI notifications via accessibility service
-    _paymentSubscription = NotificationService.notificationStream.listen((notification) async {
-      print('Received notification: $notification');
-      final paymentData = NotificationService.parseUpiPayment(notification);
+    // Listen for UPI SMS and notifications
+    _paymentSubscription = NotificationService.notificationStream.listen((data) async {
+      print('Received data: $data');
+      final paymentData = NotificationService.parseUpiPayment(data);
       print('Parsed payment: $paymentData');
+      
+      if (paymentData['amount'] == '0' || paymentData['amount']!.isEmpty) {
+        print('No valid amount found, skipping');
+        return;
+      }
       
       final result = await ApiService.savePayment(
         amount: double.tryParse(paymentData['amount'] ?? '0') ?? 0.0,

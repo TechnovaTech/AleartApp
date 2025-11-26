@@ -52,6 +52,7 @@ public class SmsReceiver extends BroadcastReceiver {
         // Check if sender is from UPI apps
         for (String upiSender : UPI_SENDERS) {
             if (senderUpper.contains(upiSender)) {
+                Log.d(TAG, "UPI sender detected: " + sender);
                 return true;
             }
         }
@@ -59,8 +60,15 @@ public class SmsReceiver extends BroadcastReceiver {
         // Check if message contains UPI keywords
         for (String keyword : UPI_KEYWORDS) {
             if (messageUpper.contains(keyword.toUpperCase())) {
+                Log.d(TAG, "UPI keyword detected: " + keyword);
                 return true;
             }
+        }
+        
+        // Check for rupee symbol or amount patterns
+        if (messageUpper.contains("₹") || messageUpper.contains("RS.") || messageUpper.contains("INR")) {
+            Log.d(TAG, "Currency detected in SMS");
+            return true;
         }
         
         return false;
@@ -70,10 +78,14 @@ public class SmsReceiver extends BroadcastReceiver {
         Map<String, String> data = new HashMap<>();
         data.put("sender", sender);
         data.put("message", message);
+        data.put("text", message);
         data.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        
+        Log.d(TAG, "Sending SMS to Flutter: " + message);
         
         try {
             MainActivity.sendNotificationEvent(data);
+            Log.d(TAG, "SMS sent to Flutter successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error sending SMS to Flutter", e);
         }
