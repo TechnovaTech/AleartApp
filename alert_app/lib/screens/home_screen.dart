@@ -7,7 +7,9 @@ import '../widgets/activate_alerts_bottom_sheet.dart';
 import '../widgets/custom_bottom_navbar.dart';
 import '../widgets/language_button.dart';
 import '../services/localization_service.dart';
+import '../services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 class HomeScreenMain extends StatefulWidget {
   const HomeScreenMain({super.key});
@@ -25,6 +27,9 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     1: {'start': null, 'end': null},
     2: {'start': null, 'end': null},
   };
+  
+  List<Map<String, dynamic>> _realPayments = [];
+  StreamSubscription? _paymentSubscription;
 
   @override
   void initState() {
@@ -33,7 +38,91 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     LocalizationService.loadLanguage().then((_) {
       if (mounted) setState(() {});
     });
+    _initializeNotifications();
     _checkAndShowPermissions();
+  }
+  
+  void _initializeNotifications() async {
+    await NotificationService.initialize();
+    await _loadTodaysPayments();
+    
+    _paymentSubscription = NotificationService.paymentStream.listen((paymentData) async {
+      final userData = await ApiService.getCachedUserData();
+      if (userData != null) {
+        // Save to database
+        await ApiService.savePayment(
+          userId: userData['id'],
+          amount: paymentData['amount'] ?? '₹0',
+          paymentApp: paymentData['appName'] ?? 'UPI App',
+          payerName: _extractPayerName(paymentData['text'] ?? ''),
+          upiId: paymentData['upiId'] ?? 'unknown@upi',
+          transactionId: 'TXN${DateTime.now().millisecondsSinceEpoch}',
+          notificationText: paymentData['text'] ?? '',
+        );
+        
+        // Reload payments from database
+        await _loadTodaysPayments();
+      }
+    });
+  }
+  
+  Future<void> _loadTodaysPayments() async {
+    final userData = await ApiService.getCachedUserData();
+    if (userData != null) {
+      final result = await ApiService.getPayments(userId: userData['id']);
+      if (result['success'] == true && result['payments'] != null) {
+        setState(() {
+          _realPayments = (result['payments'] as List).map((payment) => {
+            'amount': payment['amount'] ?? '₹0',
+            'paymentApp': payment['paymentApp'] ?? 'UPI App',
+            'appIcon': _getAppIcon(payment['paymentApp'] ?? ''),
+            'appColor': _getAppColor(payment['paymentApp'] ?? ''),
+            'time': payment['time'] ?? '',
+            'date': payment['date'] ?? 'Today',
+            'status': payment['status'] ?? 'Received',
+            'transactionId': payment['transactionId'] ?? '',
+            'payerName': payment['payerName'] ?? 'Unknown User',
+            'upiId': payment['upiId'] ?? 'unknown@upi',
+            'notificationType': 'Payment Received',
+          }).toList();
+        });
+      }
+    }
+  }
+  
+  IconData _getAppIcon(String appName) {
+    switch (appName.toLowerCase()) {
+      case 'google pay': return Icons.account_balance_wallet;
+      case 'phonepe': return Icons.phone_android;
+      case 'paytm': return Icons.payment;
+      case 'bhim upi': return Icons.account_balance;
+      case 'amazon pay': return Icons.shopping_bag;
+      default: return Icons.account_balance_wallet;
+    }
+  }
+  
+  Color _getAppColor(String appName) {
+    switch (appName.toLowerCase()) {
+      case 'google pay': return Colors.blue;
+      case 'phonepe': return Colors.purple;
+      case 'paytm': return Colors.indigo;
+      case 'bhim upi': return Colors.orange;
+      case 'amazon pay': return Colors.teal;
+      default: return Colors.blue;
+    }
+  }
+  
+  String _formatTime(int timestamp) {
+    if (timestamp == 0) return DateTime.now().toString().substring(11, 16);
+    final time = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+  }
+  
+  String _extractPayerName(String text) {
+    // Try to extract name from notification text
+    final nameRegex = RegExp(r'from ([A-Za-z ]+)', caseSensitive: false);
+    final match = nameRegex.firstMatch(text);
+    return match?.group(1)?.trim() ?? 'Unknown User';
   }
 
   void _checkAndShowPermissions() async {
@@ -65,6 +154,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   @override
   void dispose() {
     _pageController.dispose();
+    _paymentSubscription?.cancel();
     super.dispose();
   }
 
@@ -420,31 +510,433 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                 ],
               ),
             ),
+          SizedBox(height: 16),
+          _buildPaymentsList(index),
           SizedBox(height: 40),
-          Column(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentsList(int tabIndex) {
+    // Use real payments if available, otherwise show sample data
+    List<Map<String, dynamic>> payments = _realPayments.isNotEmpty ? _realPayments : [
+      {
+        'amount': '₹1,250',
+        'paymentApp': 'Google Pay',
+        'appIcon': Icons.account_balance_wallet,
+        'appColor': Colors.blue,
+        'time': '3:45 PM',
+        'date': 'Today',
+        'status': 'Received',
+        'transactionId': 'GPY789456123',
+        'payerName': 'Rahul Kumar',
+        'upiId': 'rahul@oksbi',
+        'notificationType': 'UPI Payment Received',
+      },
+      {
+        'amount': '₹850',
+        'paymentApp': 'PhonePe',
+        'appIcon': Icons.phone_android,
+        'appColor': Colors.purple,
+        'time': '2:20 PM',
+        'date': 'Today',
+        'status': 'Received',
+        'transactionId': 'PPE456789012',
+        'payerName': 'Priya Sharma',
+        'upiId': 'priya@ybl',
+        'notificationType': 'Money Received',
+      },
+      {
+        'amount': '₹2,100',
+        'paymentApp': 'Paytm',
+        'appIcon': Icons.payment,
+        'appColor': Colors.indigo,
+        'time': '1:10 PM',
+        'date': 'Today',
+        'status': 'Received',
+        'transactionId': 'PTM123654789',
+        'payerName': 'Amit Singh',
+        'upiId': 'amit@paytm',
+        'notificationType': 'Payment Received',
+      },
+      {
+        'amount': '₹650',
+        'paymentApp': 'BHIM UPI',
+        'appIcon': Icons.account_balance,
+        'appColor': Colors.orange,
+        'time': '12:30 PM',
+        'date': 'Today',
+        'status': 'Received',
+        'transactionId': 'BHM987321456',
+        'payerName': 'Sneha Patel',
+        'upiId': 'sneha@sbi',
+        'notificationType': 'UPI Credit',
+      },
+      {
+        'amount': '₹450',
+        'paymentApp': 'Amazon Pay',
+        'appIcon': Icons.shopping_bag,
+        'appColor': Colors.teal,
+        'time': '11:45 AM',
+        'date': 'Today',
+        'status': 'Received',
+        'transactionId': 'AMZ654987321',
+        'payerName': 'Vikash Gupta',
+        'upiId': 'vikash@axl',
+        'notificationType': 'Payment Received',
+      },
+    ];
+
+    if (payments.isEmpty) {
+      return Column(
+        children: [
+          Icon(Icons.receipt_long, size: 48, color: Colors.grey[400]),
+          SizedBox(height: 12),
+          Text(
+            LocalizationService.translate('no_payment_history'),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            LocalizationService.translate('payments_will_appear'),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Today\'s Payments',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                Text(
+                  'From payment app notifications',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green[200]!),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Live',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8),
+                IconButton(
+                  onPressed: _openQRScanner,
+                  icon: Icon(Icons.qr_code_scanner, color: Colors.blue[600]),
+                  tooltip: 'Scan QR Code',
+                ),
+              ],
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        ...payments.map((payment) => _buildPaymentItem(payment)).toList(),
+      ],
+    );
+  }
+
+  Widget _buildPaymentItem(Map<String, dynamic> payment) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
             children: [
-              Icon(Icons.receipt_long, size: 48, color: Colors.grey[400]),
-              SizedBox(height: 12),
-              Text(
-                LocalizationService.translate('no_payment_history'),
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: payment['appColor'].withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  payment['appIcon'],
+                  color: payment['appColor'],
+                  size: 24,
                 ),
               ),
-              SizedBox(height: 4),
-              Text(
-                LocalizationService.translate('payments_will_appear'),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          payment['amount'],
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[600],
+                          ),
+                        ),
+                        Text(
+                          payment['time'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      payment['paymentApp'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: payment['appColor'],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          SizedBox(height: 40),
+          SizedBox(height: 12),
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.notifications, size: 14, color: Colors.grey[600]),
+                    SizedBox(width: 6),
+                    Text(
+                      payment['notificationType'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'From: ${payment['payerName']}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'UPI: ${payment['upiId']}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            payment['status'],
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          payment['transactionId'],
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _openQRScanner() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'QR Code Scanner',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.qr_code_scanner, size: 80, color: Colors.grey[400]),
+                      SizedBox(height: 16),
+                      Text(
+                        'QR Scanner will be implemented here',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Point camera at QR code to scan',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('QR Scanner feature coming soon!')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[600],
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Start Scanning',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

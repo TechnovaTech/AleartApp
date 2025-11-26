@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
+import 'home_screen.dart';
 import '../services/api_service.dart';
 
 class SetPasswordScreen extends StatefulWidget {
@@ -79,7 +79,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => HomeScreenMain()),
         (route) => false,
       );
     } else {

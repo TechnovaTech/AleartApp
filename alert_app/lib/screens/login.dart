@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
+import 'home_screen.dart';
 import 'signup.dart';
 import '../services/api_service.dart';
 import '../services/localization_service.dart';
@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result['success'] == true) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => HomeScreenMain()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

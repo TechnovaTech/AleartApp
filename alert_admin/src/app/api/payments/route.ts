@@ -1,0 +1,67 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { connectDB } from '../../../../lib/mongodb'
+import Payment from '../../../../models/Payment'
+
+export async function POST(request: NextRequest) {
+  try {
+    await connectDB()
+    
+    const body = await request.json()
+    const { userId, amount, paymentApp, payerName, upiId, transactionId, notificationText } = body
+    
+    if (!userId || !amount || !paymentApp) {
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
+    }
+    
+    const now = new Date()
+    const payment = new Payment({
+      userId,
+      amount,
+      paymentApp,
+      payerName: payerName || 'Unknown User',
+      upiId: upiId || 'unknown@upi',
+      transactionId: transactionId || `TXN${Date.now()}`,
+      notificationText: notificationText || '',
+      date: now.toDateString(),
+      time: now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+    })
+    
+    await payment.save()
+    
+    return NextResponse.json({ success: true, payment })
+  } catch (error) {
+    console.error('Payment save error:', error)
+    return NextResponse.json({ success: false, error: 'Failed to save payment' }, { status: 500 })
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    await connectDB()
+    
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
+    const date = searchParams.get('date') || 'today'
+    
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'User ID required' }, { status: 400 })
+    }
+    
+    let dateFilter = {}
+    if (date === 'today') {
+      const today = new Date()
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+      dateFilter = { timestamp: { $gte: startOfDay, $lt: endOfDay } }
+    }
+    
+    const payments = await Payment.find({ userId, ...dateFilter })
+      .sort({ timestamp: -1 })
+      .limit(50)
+    
+    return NextResponse.json({ success: true, payments })
+  } catch (error) {
+    console.error('Payment fetch error:', error)
+    return NextResponse.json({ success: false, error: 'Failed to fetch payments' }, { status: 500 })
+  }
+}
