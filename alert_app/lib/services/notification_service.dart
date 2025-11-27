@@ -79,9 +79,10 @@ class NotificationService {
     
     // Try multiple UPI ID patterns
     List<RegExp> upiPatterns = [
-      RegExp(r'from\s+(\w+@\w+)', caseSensitive: false),
-      RegExp(r'(\w+@[a-zA-Z]+)', caseSensitive: false),
-      RegExp(r'UPI\s+ID[:\s]+(\w+@\w+)', caseSensitive: false),
+      RegExp(r'from\s+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      RegExp(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      RegExp(r'UPI\s+ID[:\s]+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      RegExp(r'VPA[:\s]+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
     ];
     
     for (RegExp pattern in upiPatterns) {

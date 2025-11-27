@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
           upiId: upiId,
           amount: amount,
           timestamp: { 
-            $gte: new Date(Date.now() - 300000), // Within last 5 minutes
-            $lte: new Date(Date.now() + 300000)  // Within next 5 minutes
+            $gte: new Date(Date.now() - 10000), // Within last 10 seconds
+            $lte: new Date(Date.now() + 10000)  // Within next 10 seconds
           }
         }
       ]
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       upiId: upiId || 'unknown@upi',
       transactionId: finalTransactionId,
       notificationText: notificationText || '',
-      date: now.toDateString(),
-      time: now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+      date: now.toLocaleDateString('en-IN'),
+      time: now.toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' })
     })
     
     await payment.save()
