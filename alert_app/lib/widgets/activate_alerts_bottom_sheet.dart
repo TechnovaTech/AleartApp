@@ -14,10 +14,12 @@ class ActivateAlertsBottomSheet extends StatefulWidget {
 class _ActivateAlertsBottomSheetState extends State<ActivateAlertsBottomSheet> {
   bool _notificationAccess = false;
   bool _postNotifications = false;
+  bool _smsPermission = false;
   bool _batteryOptimized = false;
   bool _volumeOk = false;
   bool _isLoadingNotification = false;
   bool _isLoadingPost = false;
+  bool _isLoadingSms = false;
   bool _isLoadingBattery = false;
   bool _isLoadingVolume = false;
 
@@ -31,12 +33,16 @@ class _ActivateAlertsBottomSheetState extends State<ActivateAlertsBottomSheet> {
     // Check notification permission
     final notificationStatus = await Permission.notification.status;
     
+    // Check SMS permission
+    final smsStatus = await Permission.sms.status;
+    
     // Check battery level for volume estimation
     final battery = Battery();
     final batteryLevel = await battery.batteryLevel;
     
     setState(() {
       _postNotifications = notificationStatus.isGranted;
+      _smsPermission = smsStatus.isGranted;
       _volumeOk = batteryLevel > 20; // Assume volume is OK if battery > 20%
     });
   }
@@ -73,6 +79,27 @@ class _ActivateAlertsBottomSheetState extends State<ActivateAlertsBottomSheet> {
     } catch (e) {
       _showSnackBar('Error requesting notification permission', Colors.red);
       setState(() => _isLoadingPost = false);
+    }
+  }
+
+  Future<void> _requestSmsPermission() async {
+    setState(() => _isLoadingSms = true);
+    
+    try {
+      final status = await Permission.sms.request();
+      setState(() {
+        _smsPermission = status.isGranted;
+        _isLoadingSms = false;
+      });
+      
+      if (status.isGranted) {
+        _showSnackBar('SMS permission granted!', Colors.green);
+      } else {
+        _showSnackBar('SMS permission denied', Colors.red);
+      }
+    } catch (e) {
+      _showSnackBar('Error requesting SMS permission', Colors.red);
+      setState(() => _isLoadingSms = false);
     }
   }
 
@@ -167,6 +194,16 @@ class _ActivateAlertsBottomSheetState extends State<ActivateAlertsBottomSheet> {
               isEnabled: _postNotifications,
               isLoading: _isLoadingPost,
               onTap: _requestPostNotifications,
+            ),
+            const SizedBox(height: 16),
+            _AlertItem(
+              icon: Icons.sms,
+              title: 'SMS Permission',
+              subtitle: 'Read UPI payment SMS',
+              action: _smsPermission ? 'Enabled' : (_isLoadingSms ? 'Loading...' : 'Turn On'),
+              isEnabled: _smsPermission,
+              isLoading: _isLoadingSms,
+              onTap: _requestSmsPermission,
             ),
             const SizedBox(height: 16),
             _AlertItem(
