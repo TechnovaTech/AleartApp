@@ -97,7 +97,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     final userData = await ApiService.getCachedUserData();
     if (userData != null) {
       print('Loading payments for user: ${userData['id']}');
-      final result = await ApiService.getPayments(userId: userData['id']);
+      final result = await ApiService.getPayments(userId: userData['id'], date: 'all');
       print('Payment fetch result: $result');
       
       if (result['success'] == true && result['payments'] != null) {
@@ -105,7 +105,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
         print('Found ${payments.length} payments');
         
         setState(() {
-          _realPayments = payments.map((payment) => {
+          _realPayments = payments.map((payment) {
             final timestamp = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
             return {
               'amount': '₹${payment['amount'] ?? '0'}',

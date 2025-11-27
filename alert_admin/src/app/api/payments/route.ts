@@ -52,11 +52,13 @@ export async function GET(request: NextRequest) {
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
       const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
       dateFilter = { timestamp: { $gte: startOfDay, $lt: endOfDay } }
+    } else if (date === 'all') {
+      dateFilter = {} // No date filter, get all payments
     }
     
     const payments = await Payment.find({ userId, ...dateFilter })
       .sort({ timestamp: -1 })
-      .limit(50)
+      .limit(100)
     
     return NextResponse.json({ success: true, payments })
   } catch (error) {

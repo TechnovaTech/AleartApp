@@ -37,10 +37,9 @@ class DemoPaymentService {
     await ApiService.savePayment(
       amount: double.parse(payment['amount']!),
       paymentApp: payment['app']!,
-      payerName: payment['name']!,
       upiId: payment['upi']!,
       transactionId: 'TXN${DateTime.now().millisecondsSinceEpoch}',
-      notificationText: 'Demo payment from ${payment['name']} via ${payment['app']}',
+      notificationText: 'Demo payment via ${payment['app']}',
     );
   }
   

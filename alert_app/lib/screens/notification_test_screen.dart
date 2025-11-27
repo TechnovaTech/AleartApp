@@ -86,7 +86,6 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
       final response = await ApiService.savePayment(
         amount: double.parse(paymentData['amount'] ?? '0'),
         paymentApp: paymentData['paymentApp'] ?? 'Unknown',
-        payerName: paymentData['payerName'] ?? 'Unknown User',
         upiId: paymentData['upiId'] ?? 'unknown@upi',
         transactionId: paymentData['transactionId'] ?? '',
         notificationText: paymentData['notificationText'] ?? '',

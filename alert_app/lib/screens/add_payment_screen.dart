@@ -54,10 +54,9 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         final result = await ApiService.savePayment(
           amount: double.tryParse(amount) ?? 0.0,
           paymentApp: _selectedApp,
-          payerName: payerName,
           upiId: upiId.isEmpty ? 'unknown@upi' : upiId,
           transactionId: 'TXN${DateTime.now().millisecondsSinceEpoch}',
-          notificationText: 'Manual entry: $payerName paid ₹$amount via $_selectedApp',
+          notificationText: 'Manual entry: ₹$amount via $_selectedApp',
         );
 
         if (result['success'] == true) {

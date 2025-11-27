@@ -288,7 +288,7 @@ class ApiService {
   
   static Future<Map<String, dynamic>> getPayments({
     required String userId,
-    String date = 'today',
+    String date = 'all',
   }) async {
     final request = http.get(
       Uri.parse('$apiUrl/payments?userId=$userId&date=$date'),

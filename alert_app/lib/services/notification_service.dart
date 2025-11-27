@@ -111,53 +111,32 @@ class NotificationService {
     String textUpper = text.toUpperCase();
     String senderUpper = sender.toUpperCase();
     
-    // Exclude bank SMS patterns first
-    bool isBankSMS = textUpper.contains('A/C') ||
-                     textUpper.contains('ACCOUNT') ||
-                     textUpper.contains('BAL:') ||
-                     textUpper.contains('BALANCE') ||
-                     textUpper.contains('DEBITED') ||
-                     textUpper.contains('WITHDRAWN') ||
-                     textUpper.contains('ATM') ||
-                     textUpper.contains('CARD USED') ||
+    // Exclude specific bank SMS patterns
+    bool isBankSMS = (textUpper.contains('A/C') && textUpper.contains('BAL:')) ||
                      textUpper.contains('DEAR CUSTOMER') ||
                      textUpper.contains('THRU UPI/') ||
-                     senderUpper.contains('BANK') ||
-                     senderUpper.contains('HDFC') ||
-                     senderUpper.contains('ICICI') ||
-                     senderUpper.contains('SBI') ||
-                     senderUpper.contains('AXIS') ||
-                     senderUpper.contains('KOTAK') ||
-                     senderUpper.contains('RPC') ||
-                     senderUpper.contains('FEDERAL');
+                     textUpper.contains('DEBITED') ||
+                     textUpper.contains('WITHDRAWN') ||
+                     textUpper.contains('ATM');
     
     if (isBankSMS) return false;
     
-    // Must be from UPI payment apps (not banks)
-    bool isFromUpiApp = senderUpper.contains('GPAY') ||
-                       senderUpper.contains('PHONEPE') ||
-                       senderUpper.contains('PAYTM') ||
-                       senderUpper.contains('BHIM') ||
-                       senderUpper.contains('AMAZON') ||
-                       senderUpper.contains('MOBIKWIK') ||
-                       senderUpper.contains('FREECHARGE') ||
-                       senderUpper.contains('CRED');
-    
-    // Or text must contain UPI app names
-    bool hasUpiAppNames = textUpper.contains('GOOGLE PAY') ||
+    // Check for UPI payment keywords
+    bool hasUpiKeywords = textUpper.contains('UPI') ||
+                         textUpper.contains('@') ||
+                         textUpper.contains('GOOGLE PAY') ||
+                         textUpper.contains('GPAY') ||
                          textUpper.contains('PHONEPE') ||
                          textUpper.contains('PAYTM') ||
                          textUpper.contains('BHIM') ||
-                         textUpper.contains('AMAZON PAY') ||
-                         textUpper.contains('MOBIKWIK') ||
-                         textUpper.contains('FREECHARGE') ||
-                         textUpper.contains('CRED');
+                         textUpper.contains('AMAZON PAY');
     
-    // Must contain payment received keywords
-    bool hasPaymentKeywords = (textUpper.contains('RECEIVED') || textUpper.contains('PAID')) &&
-                             (textUpper.contains('FROM') || textUpper.contains('BY'));
+    // Check for payment keywords
+    bool hasPaymentKeywords = textUpper.contains('RECEIVED') ||
+                             textUpper.contains('CREDITED') ||
+                             textUpper.contains('PAID');
     
-    return (isFromUpiApp || hasUpiAppNames) && hasPaymentKeywords;
+    return hasUpiKeywords && hasPaymentKeywords;
   }
   
   // Extract payment app name from SMS text
