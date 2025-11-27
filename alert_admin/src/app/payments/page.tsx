@@ -177,23 +177,6 @@ export default function PaymentsPage() {
                 Delete Selected ({selectedPayments.length})
               </button>
             )}
-            <button 
-              onClick={async () => {
-                try {
-                  const response = await fetch('/api/payments/all', { method: 'POST' })
-                  const data = await response.json()
-                  if (data.success) {
-                    fetchPayments()
-                    alert('Test payment created!')
-                  }
-                } catch (error) {
-                  console.error('Error creating test payment:', error)
-                }
-              }}
-              className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-            >
-              Add Test Payment
-            </button>
             <button className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
               <Download size={16} className="mr-2" />
               Export
