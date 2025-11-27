@@ -52,20 +52,51 @@ class NotificationService {
     String sender = data['sender'] ?? '';
     String packageName = data['packageName'] ?? '';
     
-    // Extract amount using regex
-    RegExp amountRegex = RegExp(r'₹\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false);
-    Match? amountMatch = amountRegex.firstMatch(text);
-    String amount = amountMatch?.group(1)?.replaceAll(',', '') ?? '0';
+    // Extract amount using multiple regex patterns
+    String amount = '0';
+    
+    // Try different amount patterns
+    List<RegExp> amountPatterns = [
+      RegExp(r'₹\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
+      RegExp(r'Rs\.?\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
+      RegExp(r'INR\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
+      RegExp(r'amount\s*:?\s*₹?\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
+      RegExp(r'(\d+(?:,\d+)*(?:\.\d{2})?)\s*(?:rupees?|rs)', caseSensitive: false),
+    ];
+    
+    for (RegExp pattern in amountPatterns) {
+      Match? match = pattern.firstMatch(text);
+      if (match != null && match.group(1) != null) {
+        amount = match.group(1)!.replaceAll(',', '');
+        break;
+      }
+    }
     
     // Extract UPI ID
     RegExp upiRegex = RegExp(r'(\w+@\w+)', caseSensitive: false);
     Match? upiMatch = upiRegex.firstMatch(text);
     String upiId = upiMatch?.group(1) ?? 'unknown@upi';
     
-    // Extract payer name (usually before "paid" or "sent")
-    RegExp nameRegex = RegExp(r'(?:from\s+|by\s+)?([A-Za-z\s]+)(?:\s+paid|\s+sent)', caseSensitive: false);
-    Match? nameMatch = nameRegex.firstMatch(text);
-    String payerName = nameMatch?.group(1)?.trim() ?? 'Unknown User';
+    // Extract payer name using multiple patterns
+    String payerName = 'SMS User';
+    
+    List<RegExp> namePatterns = [
+      RegExp(r'from\s+([A-Za-z\s]+?)(?:\s+(?:paid|sent|credited|received))', caseSensitive: false),
+      RegExp(r'by\s+([A-Za-z\s]+?)(?:\s+(?:paid|sent|credited|received))', caseSensitive: false),
+      RegExp(r'([A-Za-z\s]+?)\s+(?:paid|sent|credited)', caseSensitive: false),
+      RegExp(r'received\s+from\s+([A-Za-z\s]+)', caseSensitive: false),
+    ];
+    
+    for (RegExp pattern in namePatterns) {
+      Match? match = pattern.firstMatch(text);
+      if (match != null && match.group(1) != null) {
+        String name = match.group(1)!.trim();
+        if (name.length > 2 && name.length < 50) {
+          payerName = name;
+          break;
+        }
+      }
+    }
     
     // Get payment app name from package or sender
     String paymentApp = packageName.isNotEmpty ? _getAppName(packageName) : _getAppNameFromSender(sender);

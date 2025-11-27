@@ -1,29 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Download, Eye, TrendingUp, TrendingDown } from 'lucide-react'
 
-const payments = [
-  { id: 'TXN001', user: 'John Doe', amount: 500, upiId: 'john@paytm', timestamp: '2024-01-24 14:30:25', status: 'success', method: 'GPay' },
-  { id: 'TXN002', user: 'Jane Smith', amount: 1200, upiId: 'jane@gpay', timestamp: '2024-01-24 14:25:10', status: 'success', method: 'PhonePe' },
-  { id: 'TXN003', user: 'Mike Johnson', amount: 750, upiId: 'mike@phonepe', timestamp: '2024-01-24 14:20:45', status: 'pending', method: 'Paytm' },
-  { id: 'TXN004', user: 'Sarah Wilson', amount: 300, upiId: 'sarah@paytm', timestamp: '2024-01-24 14:15:30', status: 'failed', method: 'GPay' },
-]
+interface Payment {
+  _id: string
+  userId: string
+  amount: number
+  paymentApp: string
+  payerName: string
+  upiId: string
+  transactionId: string
+  notificationText: string
+  date: string
+  time: string
+  timestamp: string
+}
 
 export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    fetchPayments()
+    // Auto-refresh every 10 seconds
+    const interval = setInterval(fetchPayments, 10000)
+    return () => clearInterval(interval)
+  }, [])
+  
+  const fetchPayments = async () => {
+    try {
+      const response = await fetch('/api/payments/all')
+      const data = await response.json()
+      if (data.success) {
+        setPayments(data.payments || [])
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesSearch = payment.payerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesSearch
   })
 
-  const totalAmount = payments.reduce((sum, payment) => 
-    payment.status === 'success' ? sum + payment.amount : sum, 0
-  )
+  const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0)
 
   return (
     <div className="p-6">
@@ -113,54 +140,60 @@ export default function PaymentsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UPI ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment App</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPayments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {payment.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.user}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                    ₹{payment.amount.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.upiId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.method}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      payment.status === 'success' 
-                        ? 'bg-green-100 text-green-800' 
-                        : payment.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.timestamp}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900">
-                      <Eye size={16} />
-                    </button>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                    Loading payments...
                   </td>
                 </tr>
-              ))}
+              ) : filteredPayments.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                    No payments found
+                  </td>
+                </tr>
+              ) : (
+                filteredPayments.map((payment) => (
+                  <tr key={payment._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {payment.transactionId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.payerName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                      ₹{payment.amount.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.upiId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.paymentApp}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.date} {payment.time}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {payment.userId}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button className="text-blue-600 hover:text-blue-900">
+                        <Eye size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
