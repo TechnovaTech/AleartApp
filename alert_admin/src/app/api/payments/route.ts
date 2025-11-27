@@ -15,10 +15,22 @@ export async function POST(request: NextRequest) {
     
     const finalTransactionId = transactionId || `TXN${Date.now()}`
     
-    // Check for duplicate transaction ID
-    const existingPayment = await Payment.findOne({ transactionId: finalTransactionId })
+    // Check for duplicate transaction ID or same UPI ID + amount + time combination
+    const existingPayment = await Payment.findOne({ 
+      $or: [
+        { transactionId: finalTransactionId },
+        { 
+          upiId: upiId || 'unknown@upi',
+          amount: amount,
+          timestamp: { 
+            $gte: new Date(Date.now() - 60000), // Within last 1 minute
+            $lte: new Date(Date.now() + 60000)  // Within next 1 minute
+          }
+        }
+      ]
+    })
     if (existingPayment) {
-      return NextResponse.json({ success: false, error: 'Duplicate transaction ID' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Duplicate payment detected' }, { status: 400 })
     }
     
     const now = new Date()

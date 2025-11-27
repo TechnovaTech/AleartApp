@@ -87,8 +87,8 @@ class NotificationService {
       paymentApp = packageName.isNotEmpty ? _getAppName(packageName) : _getAppNameFromSender(sender);
     }
     
-    // Generate transaction ID based on UPI ID and timestamp
-    String transactionId = 'UPI_${upiId.replaceAll('@', '_')}_${DateTime.now().millisecondsSinceEpoch}';
+    // Generate unique transaction ID using UPI ID, amount, and timestamp
+    String transactionId = 'UPI_${upiId.replaceAll('@', '_')}_${amount}_${DateTime.now().millisecondsSinceEpoch}';
     
     return {
       'amount': amount,
