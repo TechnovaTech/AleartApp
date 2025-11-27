@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '../../../../../lib/mongodb'
 import Payment from '../../../../../models/Payment'
+import mongoose from 'mongoose'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,19 +10,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { paymentIds } = body
     
-    console.log('Delete request:', { paymentIds })
-    
     if (!paymentIds || !Array.isArray(paymentIds)) {
       return NextResponse.json({ success: false, error: 'Payment IDs required' }, { status: 400 })
     }
     
-    // Convert string IDs to ObjectIds and delete payments
-    const mongoose = require('mongoose')
-    const objectIds = paymentIds.map(id => new mongoose.Types.ObjectId(id))
+    // Validate and convert IDs
+    const validIds = paymentIds.filter(id => mongoose.Types.ObjectId.isValid(id))
     
-    const result = await Payment.deleteMany({ _id: { $in: objectIds } })
+    if (validIds.length === 0) {
+      return NextResponse.json({ success: false, error: 'No valid payment IDs provided' }, { status: 400 })
+    }
     
-    console.log('Delete result:', result)
+    // Delete payments by ID
+    const result = await Payment.deleteMany({ _id: { $in: validIds } })
     
     return NextResponse.json({ 
       success: true, 

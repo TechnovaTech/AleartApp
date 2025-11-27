@@ -31,8 +31,8 @@ export default function PaymentsPage() {
   
   useEffect(() => {
     fetchPayments()
-    // Auto-refresh every 3 seconds for real-time updates
-    const interval = setInterval(fetchPayments, 3000)
+    // Auto-refresh every 2 seconds for real-time updates
+    const interval = setInterval(fetchPayments, 2000)
     return () => clearInterval(interval)
   }, [])
   
@@ -93,7 +93,8 @@ export default function PaymentsPage() {
       
       if (data.success) {
         setSelectedPayments([])
-        fetchPayments()
+        setPayments([])
+        setTimeout(() => fetchPayments(), 100)
         alert(`${data.deletedCount} payments deleted successfully`)
       } else {
         alert(`Error: ${data.error}`)
@@ -328,8 +329,8 @@ export default function PaymentsPage() {
                                 const data = await response.json()
                                 console.log('Delete response:', data)
                                 if (data.success) {
-                                  // Force immediate refresh
-                                  await fetchPayments()
+                                  setPayments(prev => prev.filter(p => p._id !== payment._id))
+                                  setTimeout(() => fetchPayments(), 100)
                                   alert('Payment deleted successfully')
                                 } else {
                                   console.error('Delete error:', data.error)
