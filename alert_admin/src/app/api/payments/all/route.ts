@@ -7,19 +7,32 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect()
     
-    // Get all payments with user data sorted by timestamp (newest first)
+    // Get all payments sorted by timestamp (newest first)
     const payments = await Payment.find({})
-      .populate({
-        path: 'userId',
-        model: User,
-        select: 'username email'
-      })
       .sort({ timestamp: -1 })
-      .limit(100) // Limit to last 100 payments
+      .limit(100)
     
-    console.log('Fetched payments:', payments.length)
-    console.log('Sample payment:', payments[0])
-    return NextResponse.json({ success: true, payments })
+    // Manually fetch user data for each payment
+    const paymentsWithUsers = await Promise.all(
+      payments.map(async (payment) => {
+        try {
+          const user = await User.findById(payment.userId).select('username email')
+          return {
+            ...payment.toObject(),
+            user: user ? { username: user.username, email: user.email } : null
+          }
+        } catch (err) {
+          return {
+            ...payment.toObject(),
+            user: null
+          }
+        }
+      })
+    )
+    
+    console.log('Fetched payments:', paymentsWithUsers.length)
+    console.log('Sample payment with user:', paymentsWithUsers[0])
+    return NextResponse.json({ success: true, payments: paymentsWithUsers })
   } catch (error) {
     console.error('Payment fetch error:', error)
     return NextResponse.json({ success: false, error: 'Failed to fetch payments' }, { status: 500 })

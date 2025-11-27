@@ -251,8 +251,8 @@ export default function PaymentsPage() {
                       {payment.transactionId}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
-                      {payment.user?.username || 'Unknown User'}
-                      <div className="text-xs text-gray-500">{payment.user?.email}</div>
+                      {payment.user?.username || payment.userId || 'Unknown User'}
+                      <div className="text-xs text-gray-500">{payment.user?.email || 'No email'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {payment.payerName}
@@ -282,19 +282,23 @@ export default function PaymentsPage() {
                           onClick={async () => {
                             if (confirm('Are you sure you want to delete this payment?')) {
                               try {
+                                console.log('Deleting payment:', payment._id)
                                 const response = await fetch('/api/payments/delete', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ paymentIds: [payment._id] })
                                 })
                                 const data = await response.json()
+                                console.log('Delete response:', data)
                                 if (data.success) {
                                   fetchPayments()
                                   alert('Payment deleted successfully')
                                 } else {
+                                  console.error('Delete error:', data.error)
                                   alert(`Error: ${data.error}`)
                                 }
                               } catch (error) {
+                                console.error('Delete exception:', error)
                                 alert('Failed to delete payment')
                               }
                             }

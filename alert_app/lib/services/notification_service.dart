@@ -160,7 +160,7 @@ class NotificationService {
   static String _extractPaymentAppFromText(String text) {
     String textUpper = text.toUpperCase();
     
-    // Check for Google Pay first (most specific patterns)
+    // 1. Google Pay detection
     if (textUpper.contains('GOOGLE PAY') || 
         textUpper.contains('GOOGLEPAY') ||
         textUpper.contains('G PAY') ||
@@ -168,60 +168,81 @@ class NotificationService {
         textUpper.contains('VIA GOOGLE')) {
       return 'Google Pay';
     }
-    // PhonePe detection
+    // 2. PhonePe detection
     else if (textUpper.contains('PHONEPE') || 
              textUpper.contains('PHONE PE') ||
              textUpper.contains('VIA PHONEPE')) {
       return 'PhonePe';
     }
-    // Paytm detection
+    // 3. Paytm detection
     else if (textUpper.contains('PAYTM') || 
              textUpper.contains('VIA PAYTM')) {
       return 'Paytm';
     }
-    // BHIM detection
+    // 4. BHIM UPI detection
     else if (textUpper.contains('BHIM') || 
              textUpper.contains('VIA BHIM')) {
       return 'BHIM UPI';
     }
-    // Amazon Pay detection
+    // 5. Amazon Pay detection
     else if (textUpper.contains('AMAZON PAY') || 
              textUpper.contains('AMAZONPAY') ||
              textUpper.contains('VIA AMAZON')) {
       return 'Amazon Pay';
     }
-    // Other apps
-    else if (textUpper.contains('MOBIKWIK')) {
-      return 'MobiKwik';
-    } else if (textUpper.contains('FREECHARGE')) {
-      return 'FreeCharge';
-    } else if (textUpper.contains('CRED')) {
+    // 6. MobiKwik detection
+    else if (textUpper.contains('MOBIKWIK') ||
+             textUpper.contains('MOBI KWIK') ||
+             textUpper.contains('VIA MOBIKWIK')) {
+      return 'Mobikwik';
+    }
+    // 7. FreeCharge detection
+    else if (textUpper.contains('FREECHARGE') ||
+             textUpper.contains('FREE CHARGE') ||
+             textUpper.contains('VIA FREECHARGE')) {
+      return 'Freecharge';
+    }
+    // 8. CRED detection
+    else if (textUpper.contains('CRED') ||
+             textUpper.contains('VIA CRED')) {
       return 'CRED';
-    } else {
+    }
+    else {
       return 'UPI Payment';
     }
   }
   
   static String _getAppName(String packageName) {
     switch (packageName) {
+      // Google Pay
       case 'com.google.android.apps.nbu.paisa.user':
       case 'com.google.android.apps.nbu.paisa':
       case 'com.google.android.gms':
         return 'Google Pay';
+      // PhonePe
       case 'com.phonepe.app':
         return 'PhonePe';
+      // Paytm
       case 'net.one97.paytm':
       case 'com.paytm':
         return 'Paytm';
+      // BHIM UPI
       case 'in.org.npci.upiapp':
         return 'BHIM UPI';
+      // Amazon Pay
       case 'com.amazon.mShop.android.shopping':
       case 'in.amazon.mShop.android.shopping':
         return 'Amazon Pay';
+      // MobiKwik
       case 'com.mobikwik_new':
-        return 'MobiKwik';
+      case 'com.mobikwik.wallet':
+        return 'Mobikwik';
+      // FreeCharge
       case 'com.freecharge.android':
-        return 'FreeCharge';
+        return 'Freecharge';
+      // CRED
+      case 'com.dreamplug.androidapp':
+        return 'CRED';
       default:
         return 'UPI Payment';
     }
@@ -240,9 +261,11 @@ class NotificationService {
     } else if (senderUpper.contains('AMAZON')) {
       return 'Amazon Pay';
     } else if (senderUpper.contains('MOBIKWIK')) {
-      return 'MobiKwik';
+      return 'Mobikwik';
     } else if (senderUpper.contains('FREECHARGE')) {
-      return 'FreeCharge';
+      return 'Freecharge';
+    } else if (senderUpper.contains('CRED')) {
+      return 'CRED';
     } else if (senderUpper.contains('UPI')) {
       return 'UPI Payment';
     } else {
