@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class ReportsScreen extends StatefulWidget {
   final int tabIndex;
@@ -64,14 +70,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
   List<Map<String, dynamic>> get filteredPayments {
     return _payments.where((payment) {
       final paymentDate = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
-      final amount = double.tryParse(payment['amount'].toString()) ?? 0;
+      final localPaymentDate = paymentDate.add(const Duration(hours: 5, minutes: 30));
+      final paymentDay = DateTime(localPaymentDate.year, localPaymentDate.month, localPaymentDate.day);
+      final startDay = DateTime(startDate.year, startDate.month, startDate.day);
+      final endDay = DateTime(endDate.year, endDate.month, endDate.day);
       
-      bool dateMatch = paymentDate.isAfter(startDate.subtract(Duration(days: 1))) && 
-                      paymentDate.isBefore(endDate.add(Duration(days: 1)));
-      bool appMatch = _selectedApp == 'All' || payment['paymentApp'] == _selectedApp;
-      bool amountMatch = amount >= _minAmount && amount <= _maxAmount;
-      
-      return dateMatch && appMatch && amountMatch;
+      return paymentDay.isAtSameMomentAs(startDay) || 
+             paymentDay.isAtSameMomentAs(endDay) || 
+             (paymentDay.isAfter(startDay) && paymentDay.isBefore(endDay));
     }).toList();
   }
 
@@ -122,6 +128,108 @@ class _ReportsScreenState extends State<ReportsScreen> {
   String _formatDate(DateTime date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  Future<String> _generateAndSharePDF() async {
+    final pdf = pw.Document();
+    
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Payment Report',
+                style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text('Period: ${_formatDate(startDate)} to ${_formatDate(endDate)}'),
+              pw.SizedBox(height: 10),
+              pw.Text('Total Transactions: ${filteredPayments.length}'),
+              pw.Text('Total Amount: ₹${totalAmount.toStringAsFixed(2)}'),
+              pw.SizedBox(height: 20),
+              pw.Text('Payment Details:', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 10),
+              ...filteredPayments.map((payment) {
+                final amount = double.tryParse(payment['amount'].toString()) ?? 0;
+                final timestamp = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
+                final localTime = timestamp.add(const Duration(hours: 5, minutes: 30));
+                
+                return pw.Container(
+                  margin: const pw.EdgeInsets.only(bottom: 10),
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300),
+                    borderRadius: pw.BorderRadius.circular(5),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('₹${amount.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text('${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')} ${localTime.hour >= 12 ? 'PM' : 'AM'}'),
+                        ],
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text('App: ${payment['paymentApp'] ?? 'Unknown'}'),
+                      pw.Text('UPI: ${payment['upiId'] ?? 'Unknown'}'),
+                      pw.Text('ID: ${payment['transactionId'] ?? 'Unknown'}'),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
+          );
+        },
+      ),
+    );
+    
+    final output = await getTemporaryDirectory();
+    final file = File('${output.path}/payment_report.pdf');
+    await file.writeAsBytes(await pdf.save());
+    
+    return file.path;
+  }
+
+  Future<void> _downloadPDF() async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF...')),
+      );
+      
+      final pdfPath = await _generateAndSharePDF();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved: $pdfPath')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generating PDF: $e')),
+      );
+    }
+  }
+
+  Future<void> _shareToWhatsApp() async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF for WhatsApp...')),
+      );
+      
+      final pdfPath = await _generateAndSharePDF();
+      
+      await Share.shareXFiles(
+        [XFile(pdfPath)],
+        text: 'Payment Report - ${_formatDate(startDate)} to ${_formatDate(endDate)}\nTotal: ₹${totalAmount.toStringAsFixed(2)}',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error sharing to WhatsApp: $e')),
+      );
+    }
   }
 
   @override
@@ -355,11 +463,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Downloading PDF...')),
-                      );
-                    },
+                    onTap: _downloadPDF,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -380,11 +484,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sharing to WhatsApp...')),
-                      );
-                    },
+                    onTap: _shareToWhatsApp,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
