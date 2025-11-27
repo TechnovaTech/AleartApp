@@ -695,16 +695,6 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                 ),
                 SizedBox(width: 8),
                 IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => PermissionScreen()),
-                    );
-                  },
-                  icon: Icon(Icons.settings, color: Colors.blue[600]),
-                  tooltip: 'Permissions',
-                ),
-                IconButton(
                   onPressed: _addTestPayment,
                   icon: Icon(Icons.refresh, color: Colors.blue[600]),
                   tooltip: 'Refresh Payments',
@@ -855,14 +845,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
-                          payment['transactionId'],
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey[400],
-                          ),
-                        ),
+
                       ],
                     ),
                   ],
