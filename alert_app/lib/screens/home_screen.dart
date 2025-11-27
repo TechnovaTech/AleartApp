@@ -815,39 +815,31 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'UPI ID: ${payment['upiId']}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey[700],
-                          ),
+                    Expanded(
+                      child: Text(
+                        'UPI ID: ${payment['upiId']}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
                         ),
-                      ],
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.green[100],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            payment['status'],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.green[700],
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.green[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        payment['status'],
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w600,
                         ),
-
-                      ],
+                      ),
                     ),
                   ],
                 ),
