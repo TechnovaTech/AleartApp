@@ -90,20 +90,32 @@ class NotificationService {
     String upiId = upiMatch?.group(1) ?? 'unknown@upi';
     
     // Extract payer name using multiple patterns
-    String payerName = 'SMS User';
+    String payerName = 'Unknown Payer';
     
     List<RegExp> namePatterns = [
-      RegExp(r'from\s+([A-Za-z\s]+?)(?:\s+via|\s+using|\s+\()', caseSensitive: false),
-      RegExp(r'by\s+([A-Za-z\s]+?)(?:\s+via|\s+using|\s+\()', caseSensitive: false),
-      RegExp(r'received\s+from\s+([A-Za-z\s]+)', caseSensitive: false),
-      RegExp(r'paid\s+by\s+([A-Za-z\s]+)', caseSensitive: false),
+      // "You received Rs.500 from YASH KUMAR via Google Pay"
+      RegExp(r'from\s+([A-Za-z\s\.]+?)(?:\s+via|\s+using|\s+\(|\s+on|\s+UPI)', caseSensitive: false),
+      // "Rs.1000 paid by MANOJ SINGH using PhonePe"
+      RegExp(r'(?:paid|sent)\s+by\s+([A-Za-z\s\.]+?)(?:\s+via|\s+using|\s+\(|\s+on|\s+UPI)', caseSensitive: false),
+      // "RAHUL SHARMA has sent you Rs.750"
+      RegExp(r'([A-Za-z\s\.]+?)\s+has\s+(?:sent|paid)', caseSensitive: false),
+      // "Received Rs.300 from PRIYA PATEL"
+      RegExp(r'received\s+(?:rs|₹)?\.?\s*\d+(?:,\d+)*(?:\.\d{2})?\s+from\s+([A-Za-z\s\.]+)', caseSensitive: false),
+      // "AMIT GUPTA credited Rs.200"
+      RegExp(r'([A-Za-z\s\.]+?)\s+(?:credited|sent|paid)', caseSensitive: false),
+      // Extract name before UPI ID pattern
+      RegExp(r'from\s+([A-Za-z\s\.]+?)\s+\w+@\w+', caseSensitive: false),
     ];
     
     for (RegExp pattern in namePatterns) {
       Match? match = pattern.firstMatch(text);
       if (match != null && match.group(1) != null) {
         String name = match.group(1)!.trim();
-        if (name.length > 2 && name.length < 50) {
+        // Clean up the name
+        name = name.replaceAll(RegExp(r'\s+'), ' '); // Remove extra spaces
+        name = name.replaceAll(RegExp(r'[^A-Za-z\s\.]'), ''); // Remove special chars
+        
+        if (name.length > 2 && name.length < 50 && !name.toLowerCase().contains('upi')) {
           payerName = name;
           break;
         }

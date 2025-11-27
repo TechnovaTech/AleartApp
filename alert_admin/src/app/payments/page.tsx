@@ -31,8 +31,8 @@ export default function PaymentsPage() {
   
   useEffect(() => {
     fetchPayments()
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchPayments, 10000)
+    // Auto-refresh every 3 seconds for real-time updates
+    const interval = setInterval(fetchPayments, 3000)
     return () => clearInterval(interval)
   }, [])
   
@@ -112,9 +112,15 @@ export default function PaymentsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">SMS Payment Detection</h1>
         <p className="text-gray-600">Real-time UPI payments captured from SMS notifications</p>
-        <div className="mt-2 flex items-center">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
-          <span className="text-sm text-green-600 font-medium">Live SMS monitoring active</span>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+            <span className="text-sm text-green-600 font-medium">Live SMS monitoring active</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mr-2"></div>
+            <span className="text-sm text-blue-600 font-medium">Auto-refresh every 3 seconds</span>
+          </div>
         </div>
       </div>
 
@@ -215,7 +221,6 @@ export default function PaymentsPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscribed User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer UPI ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment App</th>
@@ -226,13 +231,13 @@ export default function PaymentsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                     Loading payments...
                   </td>
                 </tr>
               ) : filteredPayments.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                     No SMS payments found
                   </td>
                 </tr>
@@ -253,9 +258,6 @@ export default function PaymentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
                       {payment.user?.username || payment.userId || 'Unknown User'}
                       <div className="text-xs text-gray-500">{payment.user?.email || 'No email'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.payerName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
                       ₹{payment.amount.toLocaleString()}
