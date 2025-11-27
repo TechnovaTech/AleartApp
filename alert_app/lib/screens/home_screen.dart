@@ -15,7 +15,6 @@ import 'notification_test_screen.dart';
 import 'permission_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'dart:math';
 
 class HomeScreenMain extends StatefulWidget {
   const HomeScreenMain({super.key});
@@ -564,74 +563,41 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   Widget _buildPaymentsList(int tabIndex) {
     // Only show real payments from database, no fake data
     List<Map<String, dynamic>> payments = _realPayments;
-      {
-        'amount': '₹1,250',
-        'paymentApp': 'Google Pay',
-        'appIcon': Icons.account_balance_wallet,
-        'appColor': Colors.blue,
-        'time': '3:45 PM',
-        'date': 'Today',
-        'status': 'Received',
-        'transactionId': 'GPY789456123',
-        'payerName': 'Rahul Kumar',
-        'upiId': 'rahul@oksbi',
-        'notificationType': 'UPI Payment Received',
-      },
-      {
-        'amount': '₹850',
-        'paymentApp': 'PhonePe',
-        'appIcon': Icons.phone_android,
-        'appColor': Colors.purple,
-        'time': '2:20 PM',
-        'date': 'Today',
-        'status': 'Received',
-        'transactionId': 'PPE456789012',
-        'payerName': 'Priya Sharma',
-        'upiId': 'priya@ybl',
-        'notificationType': 'Money Received',
-      },
-      {
-        'amount': '₹2,100',
-        'paymentApp': 'Paytm',
-        'appIcon': Icons.payment,
-        'appColor': Colors.indigo,
-        'time': '1:10 PM',
-        'date': 'Today',
-        'status': 'Received',
-        'transactionId': 'PTM123654789',
-        'payerName': 'Amit Singh',
-        'upiId': 'amit@paytm',
-        'notificationType': 'Payment Received',
-      },
-      {
-        'amount': '₹650',
-        'paymentApp': 'BHIM UPI',
-        'appIcon': Icons.account_balance,
-        'appColor': Colors.orange,
-        'time': '12:30 PM',
-        'date': 'Today',
-        'status': 'Received',
-        'transactionId': 'BHM987321456',
-        'payerName': 'Sneha Patel',
-        'upiId': 'sneha@sbi',
-        'notificationType': 'UPI Credit',
-      },
-      {
-        'amount': '₹450',
-        'paymentApp': 'Amazon Pay',
-        'appIcon': Icons.shopping_bag,
-        'appColor': Colors.teal,
-        'time': '11:45 AM',
-        'date': 'Today',
-        'status': 'Received',
-        'transactionId': 'AMZ654987321',
-        'payerName': 'Vikash Gupta',
-        'upiId': 'vikash@axl',
-        'notificationType': 'Payment Received',
-      },
-    ];
 
-    // Always show payments
+    // Show message if no payments found
+    if (payments.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.inbox_outlined, size: 48, color: Colors.grey[400]),
+            SizedBox(height: 12),
+            Text(
+              'No SMS payments detected yet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Payments will appear here when SMS notifications are received',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -882,64 +848,28 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     );
   }
 
-  List<Map<String, dynamic>> _generateDynamicPayments() {
-    final now = DateTime.now();
-    final random = Random();
-    
-    // Generate payments based on current time to simulate real-time
-    final basePayments = [
-      {'amount': 150 + random.nextInt(500), 'app': 'Google Pay', 'name': 'Rahul Kumar', 'upi': 'rahul@oksbi'},
-      {'amount': 250 + random.nextInt(300), 'app': 'PhonePe', 'name': 'Priya Sharma', 'upi': 'priya@ybl'},
-      {'amount': 500 + random.nextInt(1000), 'app': 'Paytm', 'name': 'Amit Singh', 'upi': 'amit@paytm'},
-      {'amount': 75 + random.nextInt(200), 'app': 'BHIM UPI', 'name': 'Sneha Patel', 'upi': 'sneha@sbi'},
-      {'amount': 300 + random.nextInt(400), 'app': 'Amazon Pay', 'name': 'Vikash Gupta', 'upi': 'vikash@axl'},
-    ];
-    
-    return basePayments.asMap().entries.map((entry) {
-      final index = entry.key;
-      final payment = entry.value;
-      final timeOffset = Duration(minutes: (index + 1) * 15);
-      final paymentTime = now.subtract(timeOffset);
-      
-      return {
-        'amount': '₹${payment['amount']}',
-        'paymentApp': payment['app'],
-        'appIcon': _getAppIcon(payment['app']!),
-        'appColor': _getAppColor(payment['app']!),
-        'time': '${paymentTime.hour}:${paymentTime.minute.toString().padLeft(2, '0')}',
-        'date': 'Today',
-        'status': 'Received',
-        'transactionId': 'TXN${paymentTime.millisecondsSinceEpoch}',
-        'payerName': payment['name'],
-        'upiId': payment['upi'],
-        'notificationType': 'Payment Received',
-      };
-    }).toList();
-  }
+
   
   void _addTestPayment() async {
-    setState(() {
-      // Trigger rebuild to show new dynamic data
-    });
+    await _loadTodaysPayments();
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Payments refreshed with latest data'),
+        content: Text('Refreshed SMS payments from database'),
         backgroundColor: Colors.green,
       ),
     );
   }
   
   String _calculateTotalAmount() {
-    final payments = _generateDynamicPayments();
-    int total = 0;
+    double total = 0.0;
     
-    for (var payment in payments) {
+    for (var payment in _realPayments) {
       String amountStr = payment['amount'].toString().replaceAll('₹', '').replaceAll(',', '');
-      total += int.tryParse(amountStr) ?? 0;
+      total += double.tryParse(amountStr) ?? 0.0;
     }
     
-    return total.toString();
+    return total.toStringAsFixed(0);
   }
   
   void _addManualPayment() async {
