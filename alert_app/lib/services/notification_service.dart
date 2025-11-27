@@ -93,24 +93,29 @@ class NotificationService {
       }
     }
     
-    // Skip if no valid UPI ID found
+    // If no UPI ID found, use generic UPI ID but still detect payment app
     if (upiId.isEmpty || !upiId.contains('@')) {
-      return {
-        'amount': '0',
-        'upiId': '',
-        'paymentApp': 'Invalid',
-        'transactionId': '',
-        'notificationText': text,
-      };
+      upiId = 'payment@upi';
     }
     
 
     
-    // Get payment app name from SMS text first, then package/sender
+    // Get payment app name - prioritize SMS text, then package, then sender
     String paymentApp = _extractPaymentAppFromText(text);
     if (paymentApp == 'UPI Payment') {
-      paymentApp = packageName.isNotEmpty ? _getAppName(packageName) : _getAppNameFromSender(sender);
+      if (packageName.isNotEmpty) {
+        paymentApp = _getAppName(packageName);
+      }
+      if (paymentApp == 'UPI Payment' && sender.isNotEmpty) {
+        paymentApp = _getAppNameFromSender(sender);
+      }
     }
+    
+    // Debug print to see what's being detected
+    print('SMS Text: $text');
+    print('Package: $packageName');
+    print('Sender: $sender');
+    print('Detected App: $paymentApp');
     
     // Generate unique transaction ID using UPI ID, amount, and timestamp
     String transactionId = 'UPI_${upiId.replaceAll('@', '_')}_${amount}_${DateTime.now().millisecondsSinceEpoch}';

@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
     
     const finalTransactionId = transactionId || `TXN${Date.now()}`
     
-    // Skip if no valid UPI ID
-    if (!upiId || upiId === 'unknown@upi' || !upiId.includes('@')) {
+    // Allow generic UPI IDs but reject completely invalid ones
+    if (!upiId || upiId === 'unknown@upi') {
       return NextResponse.json({ success: false, error: 'Invalid UPI ID' }, { status: 400 })
     }
     
