@@ -104,10 +104,17 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
         final payments = result['payments'] as List;
         print('Found ${payments.length} payments');
         
-        setState(() {
-          _realPayments = payments.map((payment) {
-            final timestamp = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
-            return {
+        // Remove duplicates based on UPI ID + amount + similar timestamp
+        final uniquePayments = <Map<String, dynamic>>[];
+        final seen = <String>{};
+        
+        for (final payment in payments) {
+          final timestamp = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
+          final key = '${payment['upiId']}_${payment['amount']}_${timestamp.millisecondsSinceEpoch ~/ 60000}'; // Group by minute
+          
+          if (!seen.contains(key)) {
+            seen.add(key);
+            uniquePayments.add({
               'amount': '₹${payment['amount'] ?? '0'}',
               'paymentApp': payment['paymentApp'] ?? 'UPI App',
               'appIcon': _getAppIcon(payment['paymentApp'] ?? ''),
@@ -119,8 +126,12 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               'upiId': payment['upiId'] ?? 'unknown@upi',
               'notificationType': 'Payment Received',
               'timestamp': timestamp,
-            };
-          }).toList();
+            });
+          }
+        }
+        
+        setState(() {
+          _realPayments = uniquePayments;
         });
         
         print('Updated _realPayments with ${_realPayments.length} items');

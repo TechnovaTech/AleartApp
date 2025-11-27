@@ -7,10 +7,23 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect()
     
-    // Get all payments sorted by timestamp (newest first)
-    const payments = await Payment.find({})
+    // Get all payments and remove duplicates based on UPI ID + amount + similar timestamp
+    const allPayments = await Payment.find({})
       .sort({ timestamp: -1 })
-      .limit(100)
+    
+    // Remove duplicates
+    const uniquePayments = []
+    const seen = new Set()
+    
+    for (const payment of allPayments) {
+      const key = `${payment.upiId}_${payment.amount}_${Math.floor(new Date(payment.timestamp).getTime() / 60000)}` // Group by minute
+      if (!seen.has(key)) {
+        seen.add(key)
+        uniquePayments.push(payment)
+      }
+    }
+    
+    const payments = uniquePayments.slice(0, 100)
     
     // Manually fetch user data for each payment
     const paymentsWithUsers = await Promise.all(

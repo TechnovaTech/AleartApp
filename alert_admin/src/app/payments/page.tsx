@@ -320,7 +320,8 @@ export default function PaymentsPage() {
                                 const data = await response.json()
                                 console.log('Delete response:', data)
                                 if (data.success) {
-                                  fetchPayments()
+                                  // Force immediate refresh
+                                  await fetchPayments()
                                   alert('Payment deleted successfully')
                                 } else {
                                   console.error('Delete error:', data.error)
