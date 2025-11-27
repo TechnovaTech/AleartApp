@@ -203,11 +203,9 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
 
   void _checkAndShowPermissions() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('permissions_shown', false);
+    final hasGrantedAllPermissions = prefs.getBool('all_permissions_granted') ?? false;
     
-    final hasShownPermissions = prefs.getBool('permissions_shown') ?? false;
-    
-    if (!hasShownPermissions) {
+    if (!hasGrantedAllPermissions) {
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           showModalBottomSheet(
@@ -219,9 +217,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             builder: (context) => const ActivateAlertsBottomSheet(),
-          ).then((_) async {
-            await prefs.setBool('permissions_shown', true);
-          });
+          );
         }
       });
     }

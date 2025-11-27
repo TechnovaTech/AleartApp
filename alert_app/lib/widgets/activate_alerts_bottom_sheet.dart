@@ -3,6 +3,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ActivateAlertsBottomSheet extends StatefulWidget {
   const ActivateAlertsBottomSheet({super.key});
@@ -139,6 +140,10 @@ class _ActivateAlertsBottomSheetState extends State<ActivateAlertsBottomSheet> {
     }
   }
   
+  bool _allPermissionsGranted() {
+    return _notificationAccess && _postNotifications && _smsPermission && _batteryOptimized && _volumeOk;
+  }
+
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -231,18 +236,20 @@ class _ActivateAlertsBottomSheetState extends State<ActivateAlertsBottomSheet> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[400],
+                  backgroundColor: _allPermissionsGranted() ? Colors.green : Colors.grey[400],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                onPressed: () {
+                onPressed: _allPermissionsGranted() ? () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool('all_permissions_granted', true);
                   Navigator.pop(context);
-                },
-                child: const Text(
-                  'OK',
+                } : null,
+                child: Text(
+                  _allPermissionsGranted() ? 'Complete Setup' : 'Grant All Permissions',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: _allPermissionsGranted() ? Colors.white : Colors.black,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
