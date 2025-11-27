@@ -562,8 +562,8 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   }
 
   Widget _buildPaymentsList(int tabIndex) {
-    // Show dynamic payments that update automatically
-    List<Map<String, dynamic>> payments = _generateDynamicPayments();
+    // Only show real payments from database, no fake data
+    List<Map<String, dynamic>> payments = _realPayments;
       {
         'amount': '₹1,250',
         'paymentApp': 'Google Pay',
@@ -643,7 +643,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Today\'s Payments',
+                  'SMS Detected Payments',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -651,10 +651,11 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                   ),
                 ),
                 Text(
-                  'From payment app notifications',
+                  'From SMS notifications (Real-time)',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[500],
+                    color: Colors.green[600],
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
