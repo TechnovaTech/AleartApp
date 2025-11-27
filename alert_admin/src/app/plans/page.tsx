@@ -18,6 +18,7 @@ export default function PlansPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pricingType, setPricingType] = useState<'monthly' | 'yearly'>('monthly')
 
   useEffect(() => {
     fetchPlans()
@@ -87,13 +88,23 @@ export default function PlansPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Plans Management</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
-        >
-          <Plus size={20} />
-          Add Plan
-        </button>
+        <div className="flex items-center gap-4">
+          <select
+            value={pricingType}
+            onChange={(e) => setPricingType(e.target.value as 'monthly' | 'yearly')}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="monthly">Monthly Pricing</option>
+            <option value="yearly">Yearly Pricing</option>
+          </select>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+          >
+            <Plus size={20} />
+            Add Plan
+          </button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl">
@@ -144,14 +155,17 @@ export default function PlansPage() {
               </div>
               
               <div className="mb-4">
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-2xl font-bold text-blue-600">₹{plan.monthlyPrice}</span>
-                  <span className="text-gray-500 text-sm">/month</span>
-                </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-green-600">₹{plan.yearlyPrice}</span>
-                  <span className="text-gray-500 text-sm">/year</span>
+                  <span className={`text-3xl font-bold ${pricingType === 'monthly' ? 'text-blue-600' : 'text-green-600'}`}>
+                    ₹{pricingType === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice}
+                  </span>
+                  <span className="text-gray-500 text-sm">/{pricingType === 'monthly' ? 'month' : 'year'}</span>
                 </div>
+                {pricingType === 'yearly' && (
+                  <div className="text-sm text-gray-500">
+                    ₹{Math.round(plan.yearlyPrice / 12)}/month when billed annually
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">
