@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     await dbConnect()
     
     const body = await request.json()
-    const { userId, amount, paymentApp, payerName, upiId, transactionId, notificationText } = body
+    const { userId, amount, paymentApp, upiId, transactionId, notificationText } = body
     
     if (!userId || !amount || !paymentApp) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
       userId,
       amount,
       paymentApp,
-      payerName: payerName || 'Unknown User',
       upiId: upiId || 'unknown@upi',
       transactionId: transactionId || `TXN${Date.now()}`,
       notificationText: notificationText || '',

@@ -4,7 +4,6 @@ const PaymentSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   amount: { type: String, required: true },
   paymentApp: { type: String, required: true },
-  payerName: { type: String, required: true },
   upiId: { type: String, required: true },
   transactionId: { type: String, required: true },
   notificationText: { type: String, required: true },

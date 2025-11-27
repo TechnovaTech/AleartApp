@@ -71,7 +71,6 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
       final result = await ApiService.savePayment(
         amount: amount > 0 ? amount : 100.0, // Default amount if parsing fails
         paymentApp: paymentData['paymentApp'] ?? 'SMS Payment',
-        payerName: paymentData['payerName'] ?? 'SMS User',
         upiId: paymentData['upiId'] ?? 'sms@upi',
         transactionId: paymentData['transactionId'] ?? 'SMS${DateTime.now().millisecondsSinceEpoch}',
         notificationText: data['text'] ?? data['message'] ?? 'SMS Payment detected',
@@ -85,7 +84,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Payment detected: ₹${paymentData['amount']} from ${paymentData['payerName']}'),
+              content: Text('Payment detected: ₹${paymentData['amount']} via ${paymentData['paymentApp']}'),
               backgroundColor: Colors.green,
             ),
           );
@@ -115,7 +114,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
             'date': payment['date'] ?? 'Today',
             'status': 'Received',
             'transactionId': payment['transactionId'] ?? '',
-            'payerName': payment['payerName'] ?? 'Unknown User',
+
             'upiId': payment['upiId'] ?? 'unknown@upi',
             'notificationType': 'Payment Received',
           }).toList();
@@ -793,19 +792,11 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'From: ${payment['payerName']}',
+                          'UPI ID: ${payment['upiId']}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: Colors.grey[700],
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'UPI: ${payment['upiId']}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[500],
                           ),
                         ),
                       ],
