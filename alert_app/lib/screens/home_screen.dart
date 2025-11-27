@@ -63,17 +63,23 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
       final paymentData = NotificationService.parseUpiPayment(data);
       print('Parsed payment: $paymentData');
       
-      // Always try to save, even with basic data
+      // Only save if valid UPI ID found
       final amount = double.tryParse(paymentData['amount'] ?? '0') ?? 0.0;
+      final upiId = paymentData['upiId'] ?? '';
       
-      print('Attempting to save payment: Amount=₹$amount, App=${paymentData['paymentApp']}');
+      if (upiId.isEmpty || !upiId.contains('@') || amount <= 0) {
+        print('Skipping invalid payment: UPI=$upiId, Amount=$amount');
+        return;
+      }
+      
+      print('Attempting to save payment: Amount=₹$amount, UPI=$upiId');
       
       final result = await ApiService.savePayment(
-        amount: amount > 0 ? amount : 100.0, // Default amount if parsing fails
-        paymentApp: paymentData['paymentApp'] ?? 'SMS Payment',
-        upiId: paymentData['upiId'] ?? 'sms@upi',
-        transactionId: paymentData['transactionId'] ?? 'SMS${DateTime.now().millisecondsSinceEpoch}',
-        notificationText: data['text'] ?? data['message'] ?? 'SMS Payment detected',
+        amount: amount,
+        paymentApp: paymentData['paymentApp'] ?? 'UPI Payment',
+        upiId: upiId,
+        transactionId: paymentData['transactionId'] ?? 'UPI_${DateTime.now().millisecondsSinceEpoch}',
+        notificationText: data['text'] ?? data['message'] ?? 'UPI Payment detected',
       );
       
       print('Save result: $result');

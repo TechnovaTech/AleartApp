@@ -15,16 +15,21 @@ export async function POST(request: NextRequest) {
     
     const finalTransactionId = transactionId || `TXN${Date.now()}`
     
-    // Check for duplicate based on amount + notification text similarity + time
+    // Skip if no valid UPI ID
+    if (!upiId || upiId === 'unknown@upi' || !upiId.includes('@')) {
+      return NextResponse.json({ success: false, error: 'Invalid UPI ID' }, { status: 400 })
+    }
+    
+    // Check for duplicate based on UPI ID + amount + time
     const existingPayment = await Payment.findOne({ 
       $or: [
         { transactionId: finalTransactionId },
         { 
-          userId: userId,
+          upiId: upiId,
           amount: amount,
           timestamp: { 
-            $gte: new Date(Date.now() - 120000), // Within last 2 minutes
-            $lte: new Date(Date.now() + 120000)  // Within next 2 minutes
+            $gte: new Date(Date.now() - 300000), // Within last 5 minutes
+            $lte: new Date(Date.now() + 300000)  // Within next 5 minutes
           }
         }
       ]

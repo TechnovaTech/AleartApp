@@ -75,21 +75,32 @@ class NotificationService {
     }
     
     // Extract UPI ID with better patterns
-    String upiId = 'unknown@upi';
+    String upiId = '';
     
     // Try multiple UPI ID patterns
     List<RegExp> upiPatterns = [
       RegExp(r'from\s+(\w+@\w+)', caseSensitive: false),
-      RegExp(r'(\w+@\w+)', caseSensitive: false),
+      RegExp(r'(\w+@[a-zA-Z]+)', caseSensitive: false),
       RegExp(r'UPI\s+ID[:\s]+(\w+@\w+)', caseSensitive: false),
     ];
     
     for (RegExp pattern in upiPatterns) {
       Match? match = pattern.firstMatch(text);
-      if (match != null && match.group(1) != null) {
+      if (match != null && match.group(1) != null && match.group(1)!.contains('@')) {
         upiId = match.group(1)!;
         break;
       }
+    }
+    
+    // Skip if no valid UPI ID found
+    if (upiId.isEmpty || !upiId.contains('@')) {
+      return {
+        'amount': '0',
+        'upiId': '',
+        'paymentApp': 'Invalid',
+        'transactionId': '',
+        'notificationText': text,
+      };
     }
     
 
