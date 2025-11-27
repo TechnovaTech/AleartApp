@@ -74,10 +74,23 @@ class NotificationService {
       }
     }
     
-    // Extract UPI ID
-    RegExp upiRegex = RegExp(r'(\w+@\w+)', caseSensitive: false);
-    Match? upiMatch = upiRegex.firstMatch(text);
-    String upiId = upiMatch?.group(1) ?? 'unknown@upi';
+    // Extract UPI ID with better patterns
+    String upiId = 'unknown@upi';
+    
+    // Try multiple UPI ID patterns
+    List<RegExp> upiPatterns = [
+      RegExp(r'from\s+(\w+@\w+)', caseSensitive: false),
+      RegExp(r'(\w+@\w+)', caseSensitive: false),
+      RegExp(r'UPI\s+ID[:\s]+(\w+@\w+)', caseSensitive: false),
+    ];
+    
+    for (RegExp pattern in upiPatterns) {
+      Match? match = pattern.firstMatch(text);
+      if (match != null && match.group(1) != null) {
+        upiId = match.group(1)!;
+        break;
+      }
+    }
     
 
     

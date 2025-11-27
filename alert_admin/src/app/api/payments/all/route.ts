@@ -7,23 +7,17 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect()
     
-    // Get all payments and remove duplicates based on UPI ID + amount + similar timestamp
-    const allPayments = await Payment.find({})
-      .sort({ timestamp: -1 })
-    
-    // Remove duplicates
-    const uniquePayments = []
-    const seen = new Set()
-    
-    for (const payment of allPayments) {
-      const key = `${payment.upiId}_${payment.amount}_${Math.floor(new Date(payment.timestamp).getTime() / 60000)}` // Group by minute
-      if (!seen.has(key)) {
-        seen.add(key)
-        uniquePayments.push(payment)
-      }
+    // Add no-cache headers
+    const headers = {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     }
     
-    const payments = uniquePayments.slice(0, 100)
+    // Get all payments
+    const payments = await Payment.find({})
+      .sort({ timestamp: -1 })
+      .limit(100)
     
     // Manually fetch user data for each payment
     const paymentsWithUsers = await Promise.all(
@@ -43,12 +37,10 @@ export async function GET(request: NextRequest) {
       })
     )
     
-    console.log('Fetched payments:', paymentsWithUsers.length)
-    console.log('Sample payment with user:', paymentsWithUsers[0])
-    return NextResponse.json({ success: true, payments: paymentsWithUsers })
+    return NextResponse.json({ success: true, payments: paymentsWithUsers }, { headers })
   } catch (error) {
     console.error('Payment fetch error:', error)
-    return NextResponse.json({ success: false, error: 'Failed to fetch payments' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Failed to fetch payments' }, { status: 500, headers })
   }
 }
 

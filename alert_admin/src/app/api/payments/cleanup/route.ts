@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
         const payment1 = allPayments[i]
         const payment2 = allPayments[j]
         
-        // Check if payments are duplicates (same UPI ID, amount, and within 2 minutes)
-        if (payment1.upiId === payment2.upiId && 
+        // Check if payments are duplicates (same user, amount, and within 2 minutes)
+        if (payment1.userId === payment2.userId && 
             payment1.amount === payment2.amount &&
             Math.abs(new Date(payment1.timestamp).getTime() - new Date(payment2.timestamp).getTime()) < 120000) {
           duplicatesToRemove.push(payment2._id)

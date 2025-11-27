@@ -110,7 +110,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
         
         for (final payment in payments) {
           final timestamp = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
-          final key = '${payment['upiId']}_${payment['amount']}_${timestamp.millisecondsSinceEpoch ~/ 60000}'; // Group by minute
+          final key = '${payment['userId']}_${payment['amount']}_${timestamp.millisecondsSinceEpoch ~/ 120000}'; // Group by 2 minutes
           
           if (!seen.contains(key)) {
             seen.add(key);

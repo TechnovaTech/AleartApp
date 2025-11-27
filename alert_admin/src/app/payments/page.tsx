@@ -38,14 +38,16 @@ export default function PaymentsPage() {
   
   const fetchPayments = async () => {
     try {
-      const response = await fetch('/api/payments/all')
+      const response = await fetch('/api/payments/all', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
       const data = await response.json()
-      console.log('API Response:', data)
       if (data.success) {
-        console.log('Payments received:', data.payments)
         setPayments(data.payments || [])
-      } else {
-        console.error('API Error:', data.error)
       }
     } catch (error) {
       console.error('Error fetching payments:', error)
@@ -80,7 +82,10 @@ export default function PaymentsPage() {
     try {
       const response = await fetch('/api/payments/delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify({ paymentIds: selectedPayments })
       })
       
@@ -314,7 +319,10 @@ export default function PaymentsPage() {
                                 console.log('Deleting payment:', payment._id)
                                 const response = await fetch('/api/payments/delete', {
                                   method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
+                                  headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Cache-Control': 'no-cache'
+                                  },
                                   body: JSON.stringify({ paymentIds: [payment._id] })
                                 })
                                 const data = await response.json()
