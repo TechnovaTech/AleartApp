@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, payments: paymentsWithUsers }, { headers })
   } catch (error) {
     console.error('Payment fetch error:', error)
-    return NextResponse.json({ success: false, error: 'Failed to fetch payments' }, { status: 500, headers })
+    return NextResponse.json({ success: false, error: 'Failed to fetch payments' }, { status: 500 })
   }
 }
 
