@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class ReportsScreen extends StatefulWidget {
   final int tabIndex;
@@ -19,6 +20,11 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   late DateTime startDate;
   late DateTime endDate;
+  List<Map<String, dynamic>> _payments = [];
+  bool _loading = true;
+  String _selectedApp = 'All';
+  double _minAmount = 0;
+  double _maxAmount = 10000;
 
   @override
   void initState() {
@@ -38,6 +44,49 @@ class _ReportsScreenState extends State<ReportsScreen> {
         endDate = DateTime.now();
       }
     }
+    _loadPayments();
+  }
+
+  Future<void> _loadPayments() async {
+    setState(() => _loading = true);
+    final userData = await ApiService.getCachedUserData();
+    if (userData != null) {
+      final result = await ApiService.getPayments(userId: userData['id'], date: 'all');
+      if (result['success'] == true && result['payments'] != null) {
+        setState(() {
+          _payments = (result['payments'] as List).map((p) => Map<String, dynamic>.from(p)).toList();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> get filteredPayments {
+    return _payments.where((payment) {
+      final paymentDate = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
+      final amount = double.tryParse(payment['amount'].toString()) ?? 0;
+      
+      bool dateMatch = paymentDate.isAfter(startDate.subtract(Duration(days: 1))) && 
+                      paymentDate.isBefore(endDate.add(Duration(days: 1)));
+      bool appMatch = _selectedApp == 'All' || payment['paymentApp'] == _selectedApp;
+      bool amountMatch = amount >= _minAmount && amount <= _maxAmount;
+      
+      return dateMatch && appMatch && amountMatch;
+    }).toList();
+  }
+
+  double get totalAmount {
+    return filteredPayments.fold(0.0, (sum, payment) => 
+      sum + (double.tryParse(payment['amount'].toString()) ?? 0));
+  }
+
+  Map<String, int> get appBreakdown {
+    Map<String, int> breakdown = {};
+    for (var payment in filteredPayments) {
+      String app = payment['paymentApp'] ?? 'Unknown';
+      breakdown[app] = (breakdown[app] ?? 0) + 1;
+    }
+    return breakdown;
   }
 
   Future<void> _selectStartDate() async {
@@ -51,6 +100,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       setState(() {
         startDate = picked;
       });
+      _loadPayments();
     }
   }
 
@@ -65,6 +115,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       setState(() {
         endDate = picked;
       });
+      _loadPayments();
     }
   }
 
@@ -207,9 +258,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                   style: TextStyle(fontSize: 14, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  '0',
-                                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                Text(
+                                  '${filteredPayments.length}',
+                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -221,9 +272,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                   style: TextStyle(fontSize: 14, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  '₹0',
-                                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                Text(
+                                  '₹${totalAmount.toStringAsFixed(0)}',
+                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -232,6 +283,68 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       ],
                     ),
                   ),
+                  if (_loading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: filteredPayments.length,
+                      itemBuilder: (context, index) {
+                        final payment = filteredPayments[index];
+                        final amount = double.tryParse(payment['amount'].toString()) ?? 0;
+                        final timestamp = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
+                        final localTime = timestamp.add(const Duration(hours: 5, minutes: 30));
+                        
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '₹${amount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')} ${localTime.hour >= 12 ? 'PM' : 'AM'}',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'App: ${payment['paymentApp'] ?? 'Unknown'}',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'UPI: ${payment['upiId'] ?? 'Unknown'}',
+                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'ID: ${payment['transactionId'] ?? 'Unknown'}',
+                                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
@@ -241,40 +354,54 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.download, size: 18),
-                        SizedBox(width: 8),
-                        Text('Download PDF'),
-                      ],
+                  child: GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Downloading PDF...')),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.download, size: 18),
+                          SizedBox(width: 8),
+                          Text('Download PDF'),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.share, color: Colors.white, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'WhatsApp',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                  child: GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sharing to WhatsApp...')),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.share, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'WhatsApp',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
