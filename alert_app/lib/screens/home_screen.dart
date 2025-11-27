@@ -125,8 +125,8 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
               'paymentApp': payment['paymentApp'] ?? 'UPI App',
               'appIcon': _getAppIcon(payment['paymentApp'] ?? ''),
               'appColor': _getAppColor(payment['paymentApp'] ?? ''),
-              'time': payment['time'] ?? _formatRealTime(timestamp),
-              'date': payment['date'] ?? _formatRealDate(timestamp),
+              'time': _formatRealTime(timestamp),
+              'date': _formatRealDate(timestamp),
               'status': 'Received',
               'transactionId': payment['transactionId'] ?? '',
               'upiId': payment['upiId'] ?? 'unknown@upi',
@@ -178,21 +178,26 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   }
   
   String _formatRealTime(DateTime dateTime) {
-    return '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final localTime = dateTime.add(Duration(hours: 5, minutes: 30)); // Convert to IST
+    int hour = localTime.hour;
+    String period = hour >= 12 ? 'PM' : 'AM';
+    hour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    return '${hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')} $period';
   }
   
   String _formatRealDate(DateTime dateTime) {
+    final localTime = dateTime.add(Duration(hours: 5, minutes: 30)); // Convert to IST
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(Duration(days: 1));
-    final paymentDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final paymentDate = DateTime(localTime.year, localTime.month, localTime.day);
     
     if (paymentDate == today) {
       return 'Today';
     } else if (paymentDate == yesterday) {
       return 'Yesterday';
     } else {
-      return '${dateTime.day} ${_getMonth(dateTime.month)} ${dateTime.year}';
+      return '${localTime.day} ${_getMonth(localTime.month)} ${localTime.year}';
     }
   }
 
@@ -596,8 +601,8 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   }
 
   Widget _buildPaymentsList(int tabIndex) {
-    // Only show real payments from database, no fake data
-    List<Map<String, dynamic>> payments = _realPayments;
+    // Filter payments based on selected tab
+    List<Map<String, dynamic>> payments = _filterPaymentsByTab(tabIndex);
 
     // Show message if no payments found
     if (payments.isEmpty) {
@@ -871,10 +876,33 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     );
   }
   
+  List<Map<String, dynamic>> _filterPaymentsByTab(int tabIndex) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(Duration(days: 1));
+    final monthStart = DateTime(now.year, now.month, 1);
+    
+    return _realPayments.where((payment) {
+      final paymentDate = DateTime(payment['timestamp'].year, payment['timestamp'].month, payment['timestamp'].day);
+      
+      switch (tabIndex) {
+        case 0: // Today
+          return paymentDate == today;
+        case 1: // Yesterday
+          return paymentDate == yesterday;
+        case 2: // This Month
+          return paymentDate.isAfter(monthStart.subtract(Duration(days: 1))) && paymentDate.isBefore(today.add(Duration(days: 1)));
+        default:
+          return true;
+      }
+    }).toList();
+  }
+  
   String _calculateTotalAmount() {
     double total = 0.0;
+    final filteredPayments = _filterPaymentsByTab(_selectedTab);
     
-    for (var payment in _realPayments) {
+    for (var payment in filteredPayments) {
       String amountStr = payment['amount'].toString().replaceAll('₹', '').replaceAll(',', '');
       total += double.tryParse(amountStr) ?? 0.0;
     }
