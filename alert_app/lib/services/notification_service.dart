@@ -52,17 +52,7 @@ class NotificationService {
     String sender = data['sender'] ?? '';
     String packageName = data['packageName'] ?? '';
     
-    // Only process UPI payment SMS - check for UPI keywords
-    if (!_isUpiPaymentSMS(text, sender)) {
-      return {
-        'amount': '0',
-        'payerName': '',
-        'upiId': '',
-        'paymentApp': '',
-        'transactionId': '',
-        'notificationText': text,
-      };
-    }
+
     
     // Extract amount using multiple regex patterns
     String amount = '0';
@@ -97,47 +87,19 @@ class NotificationService {
       paymentApp = packageName.isNotEmpty ? _getAppName(packageName) : _getAppNameFromSender(sender);
     }
     
+    // Generate transaction ID based on UPI ID and timestamp
+    String transactionId = 'UPI_${upiId.replaceAll('@', '_')}_${DateTime.now().millisecondsSinceEpoch}';
+    
     return {
       'amount': amount,
       'upiId': upiId,
       'paymentApp': paymentApp,
-      'transactionId': 'TXN${DateTime.now().millisecondsSinceEpoch}',
+      'transactionId': transactionId,
       'notificationText': text,
     };
   }
   
-  // Check if SMS is a UPI payment (not bank SMS)
-  static bool _isUpiPaymentSMS(String text, String sender) {
-    String textUpper = text.toUpperCase();
-    String senderUpper = sender.toUpperCase();
-    
-    // Exclude specific bank SMS patterns
-    bool isBankSMS = (textUpper.contains('A/C') && textUpper.contains('BAL:')) ||
-                     textUpper.contains('DEAR CUSTOMER') ||
-                     textUpper.contains('THRU UPI/') ||
-                     textUpper.contains('DEBITED') ||
-                     textUpper.contains('WITHDRAWN') ||
-                     textUpper.contains('ATM');
-    
-    if (isBankSMS) return false;
-    
-    // Check for UPI payment keywords
-    bool hasUpiKeywords = textUpper.contains('UPI') ||
-                         textUpper.contains('@') ||
-                         textUpper.contains('GOOGLE PAY') ||
-                         textUpper.contains('GPAY') ||
-                         textUpper.contains('PHONEPE') ||
-                         textUpper.contains('PAYTM') ||
-                         textUpper.contains('BHIM') ||
-                         textUpper.contains('AMAZON PAY');
-    
-    // Check for payment keywords
-    bool hasPaymentKeywords = textUpper.contains('RECEIVED') ||
-                             textUpper.contains('CREDITED') ||
-                             textUpper.contains('PAID');
-    
-    return hasUpiKeywords && hasPaymentKeywords;
-  }
+
   
   // Extract payment app name from SMS text
   static String _extractPaymentAppFromText(String text) {

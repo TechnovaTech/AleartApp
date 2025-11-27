@@ -13,13 +13,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
     }
     
+    const finalTransactionId = transactionId || `TXN${Date.now()}`
+    
+    // Check for duplicate transaction ID
+    const existingPayment = await Payment.findOne({ transactionId: finalTransactionId })
+    if (existingPayment) {
+      return NextResponse.json({ success: false, error: 'Duplicate transaction ID' }, { status: 400 })
+    }
+    
     const now = new Date()
     const payment = new Payment({
       userId,
       amount,
       paymentApp,
       upiId: upiId || 'unknown@upi',
-      transactionId: transactionId || `TXN${Date.now()}`,
+      transactionId: finalTransactionId,
       notificationText: notificationText || '',
       date: now.toDateString(),
       time: now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
