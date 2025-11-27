@@ -100,9 +100,34 @@ export default function PaymentsPage() {
   }
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.payerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
+    const matchesSearch = payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         payment.upiId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         payment.paymentApp.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    if (!matchesSearch) return false
+    
+    // Date filtering
+    if (statusFilter === 'all') return true
+    
+    const paymentDate = new Date(payment.timestamp)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    
+    switch (statusFilter) {
+      case 'today':
+        return paymentDate >= today
+      case 'yesterday':
+        return paymentDate >= yesterday && paymentDate < today
+      case 'week':
+        return paymentDate >= weekAgo
+      case 'month':
+        return paymentDate >= monthStart
+      default:
+        return true
+    }
   })
 
   const totalAmount = payments.reduce((sum, payment) => sum + Number(payment.amount), 0)
@@ -187,7 +212,9 @@ export default function PaymentsPage() {
             >
               <option value="all">All Payments</option>
               <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
               <option value="week">This Week</option>
+              <option value="month">This Month</option>
             </select>
             {selectedPayments.length > 0 && (
               <button 

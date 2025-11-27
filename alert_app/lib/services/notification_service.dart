@@ -111,29 +111,53 @@ class NotificationService {
     String textUpper = text.toUpperCase();
     String senderUpper = sender.toUpperCase();
     
-    // Must contain UPI payment keywords
-    bool hasUpiKeywords = textUpper.contains('UPI') || 
-                         textUpper.contains('@') || 
-                         textUpper.contains('GPAY') ||
-                         textUpper.contains('PHONEPE') ||
-                         textUpper.contains('PAYTM') ||
-                         textUpper.contains('BHIM') ||
-                         textUpper.contains('AMAZON PAY');
-    
-    // Must contain payment keywords
-    bool hasPaymentKeywords = textUpper.contains('RECEIVED') ||
-                             textUpper.contains('CREDITED') ||
-                             textUpper.contains('PAID') ||
-                             textUpper.contains('PAYMENT');
-    
-    // Exclude bank SMS (account balance, debit, etc.)
-    bool isBankSMS = textUpper.contains('ACCOUNT BALANCE') ||
+    // Exclude bank SMS patterns first
+    bool isBankSMS = textUpper.contains('A/C') ||
+                     textUpper.contains('ACCOUNT') ||
+                     textUpper.contains('BAL:') ||
+                     textUpper.contains('BALANCE') ||
                      textUpper.contains('DEBITED') ||
                      textUpper.contains('WITHDRAWN') ||
                      textUpper.contains('ATM') ||
-                     textUpper.contains('CARD USED');
+                     textUpper.contains('CARD USED') ||
+                     textUpper.contains('DEAR CUSTOMER') ||
+                     textUpper.contains('THRU UPI/') ||
+                     senderUpper.contains('BANK') ||
+                     senderUpper.contains('HDFC') ||
+                     senderUpper.contains('ICICI') ||
+                     senderUpper.contains('SBI') ||
+                     senderUpper.contains('AXIS') ||
+                     senderUpper.contains('KOTAK') ||
+                     senderUpper.contains('RPC') ||
+                     senderUpper.contains('FEDERAL');
     
-    return hasUpiKeywords && hasPaymentKeywords && !isBankSMS;
+    if (isBankSMS) return false;
+    
+    // Must be from UPI payment apps (not banks)
+    bool isFromUpiApp = senderUpper.contains('GPAY') ||
+                       senderUpper.contains('PHONEPE') ||
+                       senderUpper.contains('PAYTM') ||
+                       senderUpper.contains('BHIM') ||
+                       senderUpper.contains('AMAZON') ||
+                       senderUpper.contains('MOBIKWIK') ||
+                       senderUpper.contains('FREECHARGE') ||
+                       senderUpper.contains('CRED');
+    
+    // Or text must contain UPI app names
+    bool hasUpiAppNames = textUpper.contains('GOOGLE PAY') ||
+                         textUpper.contains('PHONEPE') ||
+                         textUpper.contains('PAYTM') ||
+                         textUpper.contains('BHIM') ||
+                         textUpper.contains('AMAZON PAY') ||
+                         textUpper.contains('MOBIKWIK') ||
+                         textUpper.contains('FREECHARGE') ||
+                         textUpper.contains('CRED');
+    
+    // Must contain payment received keywords
+    bool hasPaymentKeywords = (textUpper.contains('RECEIVED') || textUpper.contains('PAID')) &&
+                             (textUpper.contains('FROM') || textUpper.contains('BY'));
+    
+    return (isFromUpiApp || hasUpiAppNames) && hasPaymentKeywords;
   }
   
   // Extract payment app name from SMS text

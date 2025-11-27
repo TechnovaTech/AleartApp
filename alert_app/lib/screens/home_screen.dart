@@ -106,17 +106,20 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
         
         setState(() {
           _realPayments = payments.map((payment) => {
-            'amount': '₹${payment['amount'] ?? '0'}',
-            'paymentApp': payment['paymentApp'] ?? 'UPI App',
-            'appIcon': _getAppIcon(payment['paymentApp'] ?? ''),
-            'appColor': _getAppColor(payment['paymentApp'] ?? ''),
-            'time': payment['time'] ?? DateTime.now().toString().substring(11, 16),
-            'date': payment['date'] ?? 'Today',
-            'status': 'Received',
-            'transactionId': payment['transactionId'] ?? '',
-
-            'upiId': payment['upiId'] ?? 'unknown@upi',
-            'notificationType': 'Payment Received',
+            final timestamp = DateTime.tryParse(payment['timestamp'] ?? '') ?? DateTime.now();
+            return {
+              'amount': '₹${payment['amount'] ?? '0'}',
+              'paymentApp': payment['paymentApp'] ?? 'UPI App',
+              'appIcon': _getAppIcon(payment['paymentApp'] ?? ''),
+              'appColor': _getAppColor(payment['paymentApp'] ?? ''),
+              'time': payment['time'] ?? _formatRealTime(timestamp),
+              'date': payment['date'] ?? _formatRealDate(timestamp),
+              'status': 'Received',
+              'transactionId': payment['transactionId'] ?? '',
+              'upiId': payment['upiId'] ?? 'unknown@upi',
+              'notificationType': 'Payment Received',
+              'timestamp': timestamp,
+            };
           }).toList();
         });
         
@@ -157,11 +160,23 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
   }
   
-  String _extractPayerName(String text) {
-    // Try to extract name from notification text
-    final nameRegex = RegExp(r'from ([A-Za-z ]+)', caseSensitive: false);
-    final match = nameRegex.firstMatch(text);
-    return match?.group(1)?.trim() ?? 'Unknown User';
+  String _formatRealTime(DateTime dateTime) {
+    return '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+  
+  String _formatRealDate(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(Duration(days: 1));
+    final paymentDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    
+    if (paymentDate == today) {
+      return 'Today';
+    } else if (paymentDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      return '${dateTime.day} ${_getMonth(dateTime.month)} ${dateTime.year}';
+    }
   }
 
   void _checkAndShowPermissions() async {
@@ -206,12 +221,16 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
     if (filterStart != null && filterEnd != null) {
       return '${filterStart.day} ${_getMonth(filterStart.month)} ${filterStart.year} - ${filterEnd.day} ${_getMonth(filterEnd.month)} ${filterEnd.year}';
     }
+    
+    final now = DateTime.now();
     if (index == 0) {
-      return '22 November 2025';
+      return '${now.day} ${_getMonth(now.month)} ${now.year}';
     } else if (index == 1) {
-      return '21 November 2025';
+      final yesterday = now.subtract(Duration(days: 1));
+      return '${yesterday.day} ${_getMonth(yesterday.month)} ${yesterday.year}';
     } else {
-      return '01 November 2025 - 22 November 2025';
+      final firstDay = DateTime(now.year, now.month, 1);
+      return '${firstDay.day} ${_getMonth(firstDay.month)} ${firstDay.year} - ${now.day} ${_getMonth(now.month)} ${now.year}';
     }
   }
 
