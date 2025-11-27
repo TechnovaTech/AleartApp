@@ -52,6 +52,18 @@ class NotificationService {
     String sender = data['sender'] ?? '';
     String packageName = data['packageName'] ?? '';
     
+    // Only process UPI payment SMS - check for UPI keywords
+    if (!_isUpiPaymentSMS(text, sender)) {
+      return {
+        'amount': '0',
+        'payerName': '',
+        'upiId': '',
+        'paymentApp': '',
+        'transactionId': '',
+        'notificationText': text,
+      };
+    }
+    
     // Extract amount using multiple regex patterns
     String amount = '0';
     
@@ -60,8 +72,8 @@ class NotificationService {
       RegExp(r'₹\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
       RegExp(r'Rs\.?\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
       RegExp(r'INR\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
-      RegExp(r'amount\s*:?\s*₹?\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
-      RegExp(r'(\d+(?:,\d+)*(?:\.\d{2})?)\s*(?:rupees?|rs)', caseSensitive: false),
+      RegExp(r'received\s*₹?\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
+      RegExp(r'credited\s*₹?\s*(\d+(?:,\d+)*(?:\.\d{2})?)', caseSensitive: false),
     ];
     
     for (RegExp pattern in amountPatterns) {
@@ -81,10 +93,10 @@ class NotificationService {
     String payerName = 'SMS User';
     
     List<RegExp> namePatterns = [
-      RegExp(r'from\s+([A-Za-z\s]+?)(?:\s+(?:paid|sent|credited|received))', caseSensitive: false),
-      RegExp(r'by\s+([A-Za-z\s]+?)(?:\s+(?:paid|sent|credited|received))', caseSensitive: false),
-      RegExp(r'([A-Za-z\s]+?)\s+(?:paid|sent|credited)', caseSensitive: false),
+      RegExp(r'from\s+([A-Za-z\s]+?)(?:\s+via|\s+using|\s+\()', caseSensitive: false),
+      RegExp(r'by\s+([A-Za-z\s]+?)(?:\s+via|\s+using|\s+\()', caseSensitive: false),
       RegExp(r'received\s+from\s+([A-Za-z\s]+)', caseSensitive: false),
+      RegExp(r'paid\s+by\s+([A-Za-z\s]+)', caseSensitive: false),
     ];
     
     for (RegExp pattern in namePatterns) {
@@ -98,8 +110,11 @@ class NotificationService {
       }
     }
     
-    // Get payment app name from package or sender
-    String paymentApp = packageName.isNotEmpty ? _getAppName(packageName) : _getAppNameFromSender(sender);
+    // Get payment app name from SMS text first, then package/sender
+    String paymentApp = _extractPaymentAppFromText(text);
+    if (paymentApp == 'UPI Payment') {
+      paymentApp = packageName.isNotEmpty ? _getAppName(packageName) : _getAppNameFromSender(sender);
+    }
     
     return {
       'amount': amount,
@@ -111,18 +126,102 @@ class NotificationService {
     };
   }
   
+  // Check if SMS is a UPI payment (not bank SMS)
+  static bool _isUpiPaymentSMS(String text, String sender) {
+    String textUpper = text.toUpperCase();
+    String senderUpper = sender.toUpperCase();
+    
+    // Must contain UPI payment keywords
+    bool hasUpiKeywords = textUpper.contains('UPI') || 
+                         textUpper.contains('@') || 
+                         textUpper.contains('GPAY') ||
+                         textUpper.contains('PHONEPE') ||
+                         textUpper.contains('PAYTM') ||
+                         textUpper.contains('BHIM') ||
+                         textUpper.contains('AMAZON PAY');
+    
+    // Must contain payment keywords
+    bool hasPaymentKeywords = textUpper.contains('RECEIVED') ||
+                             textUpper.contains('CREDITED') ||
+                             textUpper.contains('PAID') ||
+                             textUpper.contains('PAYMENT');
+    
+    // Exclude bank SMS (account balance, debit, etc.)
+    bool isBankSMS = textUpper.contains('ACCOUNT BALANCE') ||
+                     textUpper.contains('DEBITED') ||
+                     textUpper.contains('WITHDRAWN') ||
+                     textUpper.contains('ATM') ||
+                     textUpper.contains('CARD USED');
+    
+    return hasUpiKeywords && hasPaymentKeywords && !isBankSMS;
+  }
+  
+  // Extract payment app name from SMS text
+  static String _extractPaymentAppFromText(String text) {
+    String textUpper = text.toUpperCase();
+    
+    // Check for Google Pay first (most specific patterns)
+    if (textUpper.contains('GOOGLE PAY') || 
+        textUpper.contains('GOOGLEPAY') ||
+        textUpper.contains('G PAY') ||
+        textUpper.contains('GPAY') ||
+        textUpper.contains('VIA GOOGLE')) {
+      return 'Google Pay';
+    }
+    // PhonePe detection
+    else if (textUpper.contains('PHONEPE') || 
+             textUpper.contains('PHONE PE') ||
+             textUpper.contains('VIA PHONEPE')) {
+      return 'PhonePe';
+    }
+    // Paytm detection
+    else if (textUpper.contains('PAYTM') || 
+             textUpper.contains('VIA PAYTM')) {
+      return 'Paytm';
+    }
+    // BHIM detection
+    else if (textUpper.contains('BHIM') || 
+             textUpper.contains('VIA BHIM')) {
+      return 'BHIM UPI';
+    }
+    // Amazon Pay detection
+    else if (textUpper.contains('AMAZON PAY') || 
+             textUpper.contains('AMAZONPAY') ||
+             textUpper.contains('VIA AMAZON')) {
+      return 'Amazon Pay';
+    }
+    // Other apps
+    else if (textUpper.contains('MOBIKWIK')) {
+      return 'MobiKwik';
+    } else if (textUpper.contains('FREECHARGE')) {
+      return 'FreeCharge';
+    } else if (textUpper.contains('CRED')) {
+      return 'CRED';
+    } else {
+      return 'UPI Payment';
+    }
+  }
+  
   static String _getAppName(String packageName) {
     switch (packageName) {
       case 'com.google.android.apps.nbu.paisa.user':
+      case 'com.google.android.apps.nbu.paisa':
+      case 'com.google.android.gms':
         return 'Google Pay';
       case 'com.phonepe.app':
         return 'PhonePe';
       case 'net.one97.paytm':
+      case 'com.paytm':
         return 'Paytm';
       case 'in.org.npci.upiapp':
         return 'BHIM UPI';
       case 'com.amazon.mShop.android.shopping':
+      case 'in.amazon.mShop.android.shopping':
         return 'Amazon Pay';
+      case 'com.mobikwik_new':
+        return 'MobiKwik';
+      case 'com.freecharge.android':
+        return 'FreeCharge';
       default:
         return 'UPI Payment';
     }
@@ -140,10 +239,14 @@ class NotificationService {
       return 'BHIM UPI';
     } else if (senderUpper.contains('AMAZON')) {
       return 'Amazon Pay';
-    } else if (senderUpper.contains('UPI') || senderUpper.contains('BANK')) {
-      return 'Bank UPI';
-    } else {
+    } else if (senderUpper.contains('MOBIKWIK')) {
+      return 'MobiKwik';
+    } else if (senderUpper.contains('FREECHARGE')) {
+      return 'FreeCharge';
+    } else if (senderUpper.contains('UPI')) {
       return 'UPI Payment';
+    } else {
+      return 'Bank UPI';
     }
   }
 }

@@ -40,8 +40,12 @@ export default function PaymentsPage() {
     try {
       const response = await fetch('/api/payments/all')
       const data = await response.json()
+      console.log('API Response:', data)
       if (data.success) {
+        console.log('Payments received:', data.payments)
         setPayments(data.payments || [])
+      } else {
+        console.error('API Error:', data.error)
       }
     } catch (error) {
       console.error('Error fetching payments:', error)
