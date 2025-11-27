@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/home.dart';
 import 'screens/home_screen.dart';
+import 'screens/login.dart';
 import 'services/localization_service.dart';
 import 'services/api_service.dart';
 import 'widgets/language_wrapper.dart';
@@ -87,8 +88,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_isLoggedIn) {
       return HomeScreenMain();
     } else {
-      // If new user, show "Get Started" page first
-      return HomeScreen();
+      // If not logged in, show login page
+      return LoginScreen();
     }
   }
 }
