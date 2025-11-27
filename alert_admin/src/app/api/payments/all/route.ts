@@ -6,8 +6,9 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect()
     
-    // Get all payments sorted by timestamp (newest first)
+    // Get all payments with user data sorted by timestamp (newest first)
     const payments = await Payment.find({})
+      .populate('userId', 'username email')
       .sort({ timestamp: -1 })
       .limit(100) // Limit to last 100 payments
     
