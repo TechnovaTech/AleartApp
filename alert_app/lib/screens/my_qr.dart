@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/custom_bottom_navbar.dart';
 import '../widgets/language_button.dart';
 import '../services/api_service.dart';
@@ -34,6 +35,27 @@ class _MyQRScreenState extends State<MyQRScreen> {
       if (mounted) setState(() {});
     });
     _loadRecentQRCodes();
+    _loadSavedQRState();
+  }
+
+  Future<void> _loadSavedQRState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedUpiId = prefs.getString('current_qr_upi_id');
+    final savedQrData = prefs.getString('current_qr_data');
+    
+    if (savedUpiId != null && savedQrData != null) {
+      setState(() {
+        _upiControllers[_currentPage].text = savedUpiId;
+        _qrData[_currentPage] = savedQrData;
+        _qrGenerated[_currentPage] = true;
+      });
+    }
+  }
+
+  Future<void> _saveQRState(String upiId, String qrData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('current_qr_upi_id', upiId);
+    await prefs.setString('current_qr_data', qrData);
   }
 
   String _generateUPIQRData(String upiId) {
@@ -107,12 +129,13 @@ class _MyQRScreenState extends State<MyQRScreen> {
               Row(
                 children: _recentQRCodes.take(2).map((qr) => Expanded(
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       _upiControllers[_currentPage].text = qr['upiId'];
                       setState(() {
                         _qrData[_currentPage] = qr['qrData'];
                         _qrGenerated[_currentPage] = true;
                       });
+                      await _saveQRState(qr['upiId'], qr['qrData']);
                     },
                     child: Container(
                       margin: EdgeInsets.only(right: 8),
@@ -285,12 +308,14 @@ class _MyQRScreenState extends State<MyQRScreen> {
                     _isLoading = true;
                   });
                   
+                  final qrData = _generateUPIQRData(upiId);
                   setState(() {
-                    _qrData[_currentPage] = _generateUPIQRData(upiId);
+                    _qrData[_currentPage] = qrData;
                     _qrGenerated[_currentPage] = true;
                   });
                   
                   await _saveQRCode(upiId);
+                  await _saveQRState(upiId, qrData);
                   
                   setState(() {
                     _isLoading = false;
