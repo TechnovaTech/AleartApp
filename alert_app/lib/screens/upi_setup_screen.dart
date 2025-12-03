@@ -74,13 +74,26 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
       );
 
       if (response['success']) {
-        final shortUrl = response['shortUrl'] ?? 'upi://pay?pa=merchant@razorpay&pn=AlertPe&tr=${DateTime.now().millisecondsSinceEpoch}&tn=Subscription&am=${widget.planAmount ?? 99}&cu=INR';
+        final paymentUrl = response['shortUrl'] ?? response['paymentUrl'];
         
-        // Launch specific UPI app or show options
-        if (!showManualEntry && selectedApp != null) {
-          await _launchSpecificUpiApp(selectedApp!, shortUrl);
+        if (paymentUrl != null) {
+          // Launch Razorpay payment page
+          await RazorpayService.openCheckout(
+            subscriptionId: response['subscriptionId'] ?? '',
+            shortUrl: paymentUrl,
+            amount: widget.planAmount,
+            onSuccess: (result) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Payment page opened successfully!')),
+              );
+              Navigator.pushReplacementNamed(context, '/subscription-status');
+            },
+            onError: (error) {
+              _showRetryDialog('Failed to open payment: ${error['error']}');
+            },
+          );
         } else {
-          await _launchGenericUpiIntent(shortUrl);
+          _showRetryDialog('No payment URL received');
         }
       } else {
         _showRetryDialog(response['error'] ?? 'Failed to create subscription');
@@ -186,19 +199,19 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                       color: Colors.blue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Column(
+                    child: Column(
                       children: [
-                        Icon(Icons.account_balance_wallet, size: 48, color: Colors.blue),
-                        SizedBox(height: 12),
-                        Text(
-                          'UPI Autopay Setup',
+                        const Icon(Icons.payment, size: 48, color: Colors.blue),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Razorpay Payment',
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          'Set up automatic payments for your subscription',
+                          'Pay ₹${widget.planAmount ?? 99} securely with Razorpay',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -206,116 +219,29 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
 
                   const SizedBox(height: 24),
 
-                  if (!showManualEntry) ...[
-                    // UPI App Selection
-                    const Text(
-                      'Select UPI App',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  // Payment Methods
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Found ${installedApps.length} UPI apps on your device:',
-                      style: const TextStyle(color: Colors.green, fontSize: 14),
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    ...installedApps.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final app = entry.value;
-                      final priority = index == 0 ? 'Highest Priority' : 
-                                     index == 1 ? 'High Priority' : 'Available';
-                      
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: index == 0 ? Colors.green : Colors.grey.shade300,
-                            width: index == 0 ? 2 : 1,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Payment Methods Available:',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        child: RadioListTile<Map<String, String>>(
-                          value: app,
-                          groupValue: selectedApp,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedApp = value;
-                            });
-                          },
-                          title: Row(
-                            children: [
-                              Icon(
-                                Icons.payment,
-                                color: index == 0 ? Colors.green : Colors.blue,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(app['name']!),
-                              if (index == 0) ...[
-                                const SizedBox(width: 8),
-                                const Icon(Icons.star, color: Colors.orange, size: 16),
-                              ],
-                            ],
-                          ),
-                          subtitle: Text(
-                            priority,
-                            style: TextStyle(
-                              color: index == 0 ? Colors.green : Colors.grey,
-                              fontWeight: index == 0 ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-
-                    const SizedBox(height: 16),
-                    
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          showManualEntry = true;
-                        });
-                      },
-                      child: const Text('Enter UPI ID manually'),
+                        const SizedBox(height: 12),
+                        _buildPaymentMethod(Icons.account_balance_wallet, 'UPI (PhonePe, GPay, Paytm)', 'Instant payment'),
+                        _buildPaymentMethod(Icons.credit_card, 'Credit/Debit Cards', 'Visa, Mastercard, RuPay'),
+                        _buildPaymentMethod(Icons.account_balance, 'Net Banking', 'All major banks'),
+                        _buildPaymentMethod(Icons.wallet, 'Wallets', 'Paytm, PhonePe, Amazon Pay'),
+                      ],
                     ),
-                  ],
-
-                  if (showManualEntry) ...[
-                    // Manual UPI ID Entry
-                    const Text(
-                      'Enter UPI ID',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    TextField(
-                      controller: _upiIdController,
-                      decoration: const InputDecoration(
-                        hintText: 'username@paytm',
-                        prefixIcon: Icon(Icons.account_balance_wallet),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    const Text(
-                      'No UPI apps found on your device. Please enter your UPI ID manually.',
-                      style: TextStyle(color: Colors.orange, fontSize: 12),
-                    ),
-
-                    if (installedApps.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            showManualEntry = false;
-                          });
-                        },
-                        child: const Text('Use installed UPI app'),
-                      ),
-                    ],
-                  ],
+                  ),
 
                   const SizedBox(height: 32),
 
@@ -330,14 +256,15 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Setup Process:',
+                          'Payment Process:',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         SizedBox(height: 8),
-                        Text('1. Click "Activate Autopay" below'),
-                        Text('2. Your UPI app will open'),
-                        Text('3. Authorize the mandate'),
-                        Text('4. Your subscription will be activated'),
+                        Text('1. Click "Pay Now" below'),
+                        Text('2. Razorpay payment page will open'),
+                        Text('3. Choose your preferred payment method'),
+                        Text('4. Complete the payment securely'),
+                        Text('5. Your subscription will be activated'),
                       ],
                     ),
                   ),
@@ -356,15 +283,43 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                       ),
                       child: isProcessing
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Activate Autopay',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          : Text(
+                              'Pay ₹${widget.planAmount ?? 99} - Secure Payment',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),
                   ),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildPaymentMethod(IconData icon, String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blue, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle, color: Colors.green, size: 16),
+        ],
+      ),
     );
   }
 

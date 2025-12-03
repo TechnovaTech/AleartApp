@@ -39,20 +39,32 @@ export async function POST(request: NextRequest) {
       }, { status: 404, headers: corsHeaders })
     }
 
-    // Create Razorpay subscription
-    const subscriptionData = {
-      plan_id: plan.razorpayPlanId || await createRazorpayPlan(plan),
-      customer_notify: 1 as 0 | 1,
-      quantity: 1,
-      total_count: 12, // For monthly plan, 12 months
-      addons: [],
+    // Create Razorpay payment link for subscription
+    const paymentLinkData = {
+      amount: (amount || plan.price) * 100, // Convert to paise
+      currency: 'INR',
+      accept_partial: false,
+      description: `${plan.name} - Monthly Subscription`,
+      customer: {
+        name: user.username,
+        email: user.email,
+        contact: user.mobile
+      },
+      notify: {
+        sms: true,
+        email: true
+      },
+      reminder_enable: true,
       notes: {
         userId: userId,
-        mobile: user.mobile
-      }
+        planId: planId,
+        type: 'subscription'
+      },
+      callback_url: 'https://technovatechnologies.online/payment-success',
+      callback_method: 'get'
     }
 
-    const razorpaySubscription = await razorpay.subscriptions.create(subscriptionData)
+    const razorpayPaymentLink = await razorpay.paymentLink.create(paymentLinkData)
     
     // Update subscription in database
     let subscription = await Subscription.findOne({ userId })
@@ -60,23 +72,20 @@ export async function POST(request: NextRequest) {
       subscription = new Subscription({
         userId,
         planId,
-        amount: plan.price,
-        status: 'active'
+        amount: amount || plan.price,
+        status: 'pending'
       })
     }
     
-    subscription.razorpaySubscriptionId = razorpaySubscription.id
-    subscription.subscriptionStartDate = new Date()
-    subscription.nextRenewalDate = new Date(Date.now() + (plan.duration === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000)
+    subscription.razorpaySubscriptionId = razorpayPaymentLink.id
+    subscription.status = 'pending'
     await subscription.save()
-    
-    // Create UPI payment URL with actual amount
-    const upiUrl = `upi://pay?pa=merchant@razorpay&pn=AlertPe&tr=${Date.now()}&tn=Subscription Payment&am=${amount || plan.price}&cu=INR`
     
     return NextResponse.json({ 
       success: true, 
-      subscriptionId: razorpaySubscription.id,
-      shortUrl: razorpaySubscription.short_url || upiUrl,
+      subscriptionId: razorpayPaymentLink.id,
+      shortUrl: razorpayPaymentLink.short_url,
+      paymentUrl: razorpayPaymentLink.short_url,
       amount: amount || plan.price
     }, { headers: corsHeaders })
     

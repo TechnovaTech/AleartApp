@@ -39,30 +39,26 @@ class RazorpayService {
     double? amount,
   }) async {
     try {
-      // Use dynamic amount or default
-      final paymentAmount = amount?.toStringAsFixed(2) ?? '99.00';
-      final upiUrl = 'upi://pay?pa=merchant@razorpay&pn=AlertPe&tr=${DateTime.now().millisecondsSinceEpoch}&tn=Subscription Payment&am=$paymentAmount&cu=INR';
-      
-      final success = await _launchUpiIntent(upiUrl, specificApp);
+      // Launch Razorpay payment link
+      final success = await _launchPaymentUrl(shortUrl);
       if (success) {
-        onSuccess({'status': 'success', 'app': specificApp ?? 'generic'});
+        onSuccess({'status': 'success', 'paymentUrl': shortUrl});
       } else {
-        onError({'error': 'Failed to launch UPI app'});
+        onError({'error': 'Failed to open payment page'});
       }
     } catch (e) {
       onError({'error': e.toString()});
     }
   }
   
-  static Future<bool> _launchUpiIntent(String upiUrl, String? specificApp) async {
+  static Future<bool> _launchPaymentUrl(String paymentUrl) async {
     try {
-      final result = await _channel.invokeMethod('launchUpiIntent', {
-        'url': upiUrl,
-        'specificApp': specificApp,
+      final result = await _channel.invokeMethod('launchPaymentUrl', {
+        'url': paymentUrl,
       });
       return result ?? false;
     } catch (e) {
-      print('Failed to launch UPI intent: $e');
+      print('Failed to launch payment URL: $e');
       return false;
     }
   }
