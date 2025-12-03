@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:installed_apps/installed_apps.dart';
 
 class UpiAppDetectionService {
   static const MethodChannel _channel = MethodChannel('upi_app_detection');
@@ -51,7 +52,8 @@ class UpiAppDetectionService {
 
   static Future<List<Map<String, String>>> _getInstalledAppsWithPermission() async {
     try {
-      final List<dynamic> installedPackages = await _channel.invokeMethod('getInstalledUpiApps');
+      final List<AppInfo> installedApps = await InstalledApps.getInstalledApps(true, true);
+      final List<String> installedPackages = installedApps.map((app) => app.packageName).toList();
       
       return _upiApps.where((app) {
         return installedPackages.contains(app['packageName']);
@@ -63,7 +65,8 @@ class UpiAppDetectionService {
 
   static Future<List<Map<String, String>>> _getInstalledAppsLegacy() async {
     try {
-      final List<dynamic> installedPackages = await _channel.invokeMethod('getInstalledPackages');
+      final List<AppInfo> installedApps = await InstalledApps.getInstalledApps(false, false);
+      final List<String> installedPackages = installedApps.map((app) => app.packageName).toList();
       
       return _upiApps.where((app) {
         return installedPackages.contains(app['packageName']);

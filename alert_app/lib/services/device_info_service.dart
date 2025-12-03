@@ -47,7 +47,7 @@ class DeviceInfoService {
     
     if (deviceId == null) {
       final deviceInfo = await getDeviceInfo();
-      deviceId = deviceInfo['deviceId'] ?? _generateUniqueId();
+      deviceId = (deviceInfo['deviceId'] as String?) ?? _generateUniqueId();
       await prefs.setString('unique_device_id', deviceId);
     }
     
