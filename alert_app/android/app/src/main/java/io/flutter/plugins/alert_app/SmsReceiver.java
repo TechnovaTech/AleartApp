@@ -9,6 +9,12 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 import com.example.alert_new.MainActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import android.app.PendingIntent;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
 
 public class SmsReceiver extends BroadcastReceiver {
     private static final String TAG = "SmsReceiver";
@@ -38,6 +44,7 @@ public class SmsReceiver extends BroadcastReceiver {
                         if (isPaymentSms(sender, message)) {
                             Log.d(TAG, "Payment SMS detected");
                             sendSmsToFlutter(sender, message);
+                            showNotification(context, "Payment Alert", "New UPI payment detected: " + message.substring(0, Math.min(50, message.length())) + "...");
                         }
                     }
                 }
@@ -88,6 +95,45 @@ public class SmsReceiver extends BroadcastReceiver {
             Log.d(TAG, "SMS sent to Flutter successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error sending SMS to Flutter", e);
+        }
+    }
+    
+    private void showNotification(Context context, String title, String message) {
+        try {
+            // Create intent for notification tap
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            
+            PendingIntent pendingIntent;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+            } else {
+                pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+            
+            // Get default notification sound
+            Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            
+            // Build notification with sound
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "payment_alerts")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setSound(soundUri)
+                .setVibrate(new long[]{0, 500, 1000})
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+            
+            // Show notification
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+            if (notificationManager.areNotificationsEnabled()) {
+                notificationManager.notify((int) System.currentTimeMillis(), builder.build());
+                Log.d(TAG, "Notification shown with sound");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing notification", e);
         }
     }
 }

@@ -74,28 +74,54 @@ class NotificationService {
       }
     }
     
-    // Extract UPI ID with better patterns
+    // Extract UPI ID with enhanced patterns
     String upiId = '';
     
-    // Try multiple UPI ID patterns
+    // Enhanced UPI ID patterns for better detection
     List<RegExp> upiPatterns = [
-      RegExp(r'from\s+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "from john@paytm" or "From: john@paytm"
+      RegExp(r'from[:\s]+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "by john@phonepe" or "By: john@phonepe"
+      RegExp(r'by[:\s]+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "UPI ID: john@paytm" or "UPI ID john@paytm"
+      RegExp(r'upi\s+id[:\s]*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "VPA: john@paytm" or "VPA john@paytm"
+      RegExp(r'vpa[:\s]*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "Payer: john@paytm" or "Payer john@paytm"
+      RegExp(r'payer[:\s]*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "Sender: john@paytm" or "Sender john@paytm"
+      RegExp(r'sender[:\s]*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "paid by john@paytm"
+      RegExp(r'paid\s+by[:\s]*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "received from john@paytm"
+      RegExp(r'received\s+from[:\s]*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Pattern: "credited by john@paytm"
+      RegExp(r'credited\s+by[:\s]*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
+      // Generic pattern: any valid UPI ID format
       RegExp(r'([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
-      RegExp(r'UPI\s+ID[:\s]+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
-      RegExp(r'VPA[:\s]+([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+)', caseSensitive: false),
     ];
     
     for (RegExp pattern in upiPatterns) {
       Match? match = pattern.firstMatch(text);
       if (match != null && match.group(1) != null && match.group(1)!.contains('@')) {
-        upiId = match.group(1)!;
-        break;
+        String foundUpiId = match.group(1)!.toLowerCase();
+        // Validate UPI ID format (must have @ and valid domain)
+        if (foundUpiId.contains('@') && foundUpiId.split('@').length == 2) {
+          String domain = foundUpiId.split('@')[1];
+          // Check if domain is valid (contains at least one dot or is known UPI handle)
+          List<String> validHandles = ['paytm', 'phonepe', 'googlepay', 'ybl', 'okaxis', 'okhdfcbank', 'okicici', 'oksbi', 'upi'];
+          if (domain.contains('.') || validHandles.contains(domain)) {
+            upiId = foundUpiId;
+            break;
+          }
+        }
       }
     }
     
-    // If no UPI ID found, use generic UPI ID but still detect payment app
+    // If no UPI ID found, generate unique identifier based on timestamp and amount
     if (upiId.isEmpty || !upiId.contains('@')) {
-      upiId = 'payment@upi';
+      String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      upiId = 'user${timestamp.substring(timestamp.length - 6)}@upi';
     }
     
 
@@ -115,10 +141,14 @@ class NotificationService {
     print('SMS Text: $text');
     print('Package: $packageName');
     print('Sender: $sender');
+    print('Detected UPI ID: $upiId');
     print('Detected App: $paymentApp');
+    print('Generated Transaction ID: $transactionId');
     
-    // Generate unique transaction ID using UPI ID, amount, and timestamp
-    String transactionId = 'UPI_${upiId.replaceAll('@', '_')}_${amount}_${DateTime.now().millisecondsSinceEpoch}';
+    // Generate unique transaction ID with better uniqueness
+    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    String randomSuffix = (timestamp.hashCode % 10000).abs().toString().padLeft(4, '0');
+    String transactionId = 'UPI_${amount}_${timestamp}_${randomSuffix}';
     
     return {
       'amount': amount,

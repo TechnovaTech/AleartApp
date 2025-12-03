@@ -11,6 +11,11 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.media.AudioAttributes
+import android.media.RingtoneManager
+import android.net.Uri
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "payment_notifications"
@@ -28,6 +33,9 @@ class MainActivity: FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        
+        // Create notification channel with sound
+        createNotificationChannel()
         
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -69,5 +77,32 @@ class MainActivity: FlutterActivity() {
     private fun checkBasicPermissions(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED &&
                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
+    }
+    
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = "payment_alerts"
+            val channelName = "Payment Alerts"
+            val channelDescription = "Notifications for UPI payment alerts"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            
+            val channel = NotificationChannel(channelId, channelName, importance).apply {
+                description = channelDescription
+                enableLights(true)
+                enableVibration(true)
+                setShowBadge(true)
+                
+                // Set custom sound
+                val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val audioAttributes = AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
+                setSound(soundUri, audioAttributes)
+            }
+            
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager?.createNotificationChannel(channel)
+        }
     }
 }

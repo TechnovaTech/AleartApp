@@ -208,6 +208,8 @@ export default function PaymentsPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Search payments by payer name or transaction ID"
+              title="Search payments by payer name or transaction ID"
             />
           </div>
           <div className="flex gap-2">
@@ -215,6 +217,8 @@ export default function PaymentsPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Filter payments by date range"
+              title="Filter payments by date range"
             >
               <option value="all">All Payments</option>
               <option value="today">Today</option>
@@ -250,6 +254,8 @@ export default function PaymentsPage() {
                     checked={selectedPayments.length === filteredPayments.length && filteredPayments.length > 0}
                     onChange={handleSelectAll}
                     className="rounded border-gray-300"
+                    aria-label="Select all payments"
+                    title="Select all payments"
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
@@ -283,6 +289,8 @@ export default function PaymentsPage() {
                         checked={selectedPayments.includes(payment._id)}
                         onChange={() => handleSelectPayment(payment._id)}
                         className="rounded border-gray-300"
+                        aria-label={`Select payment ${payment.transactionId}`}
+                        title={`Select payment ${payment.transactionId}`}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
