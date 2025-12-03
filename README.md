@@ -350,8 +350,8 @@ JWT_SECRET=your-jwt-secret-key
 ENCRYPTION_KEY=your-encryption-key
 
 # External APIs
-RAZORPAY_KEY_ID=your-razorpay-key
-RAZORPAY_KEY_SECRET=your-razorpay-secret
+RAZORPAY_KEY_ID=rzp_live_Rn6F0KvLNhV5nC
+RAZORPAY_KEY_SECRET=QhKzF0GIViRtnP2Y3j4Zxb87
 ```
 
 ## 🌐 Production Deployment

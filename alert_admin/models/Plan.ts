@@ -21,6 +21,9 @@ const PlanSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  razorpayPlanId: {
+    type: String
+  },
   isActive: {
     type: Boolean,
     default: true

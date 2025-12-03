@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/razorpay_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({Key? key}) : super(key: key);
@@ -40,31 +41,31 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       final userData = await ApiService.getCachedUserData();
       if (userData == null) return;
 
-      // Create subscription
-      final subscriptionResponse = await ApiService.post('/subscription/create', {
-        'userId': userData['_id'],
-        'planId': planData?['_id'] ?? 'default_plan',
-        'amount': planData?['price'] ?? 299,
-      });
+      // Create real Razorpay subscription
+      final razorpayResponse = await RazorpayService.createSubscription(
+        userId: userData['_id'],
+        planId: planData?['_id'] ?? 'default_plan',
+      );
 
-      if (subscriptionResponse['success']) {
-        // Create mock Razorpay subscription
-        final razorpayResponse = await ApiService.post('/mock-razorpay/create-subscription', {
-          'userId': userData['_id'],
-          'amount': planData?['price'] ?? 299,
-        });
-
-        if (razorpayResponse['success']) {
-          // Navigate to mandate approval
-          Navigator.pushNamed(
-            context,
-            '/mandate-approval',
-            arguments: {
-              'approvalUrl': razorpayResponse['approvalUrl'],
-              'mandateId': razorpayResponse['mandateId'],
-            },
-          );
-        }
+      if (razorpayResponse['success']) {
+        // Launch UPI Autopay flow
+        await RazorpayService.openCheckout(
+          subscriptionId: razorpayResponse['subscriptionId'],
+          shortUrl: razorpayResponse['shortUrl'],
+          onSuccess: (response) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Subscription activated successfully!')),
+            );
+            Navigator.pushReplacementNamed(context, '/subscription-status');
+          },
+          onError: (error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Payment failed: ${error['error']}')),
+            );
+          },
+        );
+      } else {
+        throw Exception(razorpayResponse['error'] ?? 'Failed to create subscription');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

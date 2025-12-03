@@ -36,6 +36,9 @@ class MainActivity: FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
+        // Register Razorpay plugin
+        flutterEngine.plugins.add(RazorpayPlugin())
+        
         // Create notification channel with sound
         createNotificationChannel()
         
