@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   battery_plus
+  firebase_core
   flutter_tts
   permission_handler_windows
   printing

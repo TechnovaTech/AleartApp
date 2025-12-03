@@ -34,7 +34,7 @@ const modules = [
   { id: 'user-timeline', name: 'User Timeline', icon: Activity },
   { id: 'webhook-logs', name: 'Webhook Logs', icon: Webhook },
   { id: 'analytics', name: 'Analytics', icon: BarChart3 },
-  { id: 'notifications', name: 'Notifications', icon: Bell },
+  { id: 'push-notifications', name: 'Push Notifications', icon: Bell },
   { id: 'reports', name: 'Reports', icon: FileText },
   { id: 'support', name: 'Support', icon: HelpCircle },
 ]

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
 
 interface Plan {
   _id?: string;
@@ -85,17 +84,16 @@ export default function PlansPage() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Subscription Plans</h1>
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Add New Plan
-          </button>
-        </div>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Subscription Plans</h1>
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Add New Plan
+        </button>
+      </div>
 
         {showForm && (
           <div className="bg-white p-6 rounded-lg shadow mb-6">
@@ -186,7 +184,6 @@ export default function PlansPage() {
             </div>
           ))}
         </div>
-      </div>
-    </DashboardLayout>
+    </div>
   );
 }
