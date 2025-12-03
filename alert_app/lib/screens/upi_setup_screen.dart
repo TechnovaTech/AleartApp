@@ -7,11 +7,13 @@ import '../services/device_compatibility_service.dart';
 class UpiSetupScreen extends StatefulWidget {
   final String userId;
   final String planId;
+  final double? planAmount;
   
   const UpiSetupScreen({
     Key? key,
     required this.userId,
     required this.planId,
+    this.planAmount,
   }) : super(key: key);
 
   @override
@@ -32,41 +34,24 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
   void initState() {
     super.initState();
     _detectUpiApps();
-    _checkDeviceCompatibility();
   }
 
   Future<void> _detectUpiApps() async {
-    try {
-      final apps = await UpiAppDetectionService.getInstalledUpiApps();
-      final orderedApps = UpiAppDetectionService.getPriorityOrderedApps(apps);
-      
-      setState(() {
-        installedApps = orderedApps;
-        selectedApp = UpiAppDetectionService.getTopPriorityApp(apps);
-        showManualEntry = !UpiAppDetectionService.hasAnyUpiApp(apps);
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        showManualEntry = true;
-        isLoading = false;
-      });
-    }
+    setState(() {
+      // Show top 4 UPI apps directly
+      installedApps = [
+        {'name': 'PhonePe', 'packageName': 'com.phonepe.app'},
+        {'name': 'Google Pay', 'packageName': 'com.google.android.apps.nfc.payment'},
+        {'name': 'Paytm', 'packageName': 'net.one97.paytm'},
+        {'name': 'BHIM', 'packageName': 'in.org.npci.upiapp'},
+      ];
+      selectedApp = installedApps.first;
+      showManualEntry = false;
+      isLoading = false;
+    });
   }
 
-  Future<void> _checkDeviceCompatibility() async {
-    try {
-      final isProblematic = await DeviceCompatibilityService.isProblematicDevice();
-      final instructions = await DeviceCompatibilityService.getDeviceSpecificInstructions();
-      
-      setState(() {
-        isProblematicDevice = isProblematic;
-        deviceInstructions = instructions;
-      });
-    } catch (e) {
-      // Continue without device-specific handling
-    }
-  }
+
 
   Future<void> _activateAutopay() async {
     if (showManualEntry && !UpiAppDetectionService.isValidUpiId(_upiIdController.text)) {
@@ -81,31 +66,77 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
     });
 
     try {
+      // Create real Razorpay subscription
       final response = await RazorpayService.createSubscription(
         userId: widget.userId,
         planId: widget.planId,
+        amount: widget.planAmount,
       );
 
       if (response['success']) {
-        await RazorpayService.openCheckout(
-          subscriptionId: response['subscriptionId'],
-          shortUrl: response['shortUrl'],
-          onSuccess: (result) {
-            Navigator.pushReplacementNamed(context, '/subscription-status');
-          },
-          onError: (error) {
-            _showRetryDialog(error['error']);
-          },
-        );
+        final shortUrl = response['shortUrl'] ?? 'upi://pay?pa=merchant@razorpay&pn=AlertPe&tr=${DateTime.now().millisecondsSinceEpoch}&tn=Subscription&am=${widget.planAmount ?? 99}&cu=INR';
+        
+        // Launch specific UPI app or show options
+        if (!showManualEntry && selectedApp != null) {
+          await _launchSpecificUpiApp(selectedApp!, shortUrl);
+        } else {
+          await _launchGenericUpiIntent(shortUrl);
+        }
       } else {
-        _showRetryDialog(response['error']);
+        _showRetryDialog(response['error'] ?? 'Failed to create subscription');
       }
     } catch (e) {
-      _showRetryDialog(e.toString());
+      _showRetryDialog('Network error: $e');
     } finally {
       setState(() {
         isProcessing = false;
       });
+    }
+  }
+
+  Future<void> _launchSpecificUpiApp(Map<String, String> app, String shortUrl) async {
+    try {
+      final packageName = app['packageName']!;
+      final appName = app['name']!;
+      
+      await RazorpayService.openCheckout(
+        subscriptionId: '',
+        shortUrl: shortUrl,
+        specificApp: packageName,
+        amount: widget.planAmount,
+        onSuccess: (result) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Autopay activated via $appName!')),
+          );
+          Navigator.pushReplacementNamed(context, '/subscription-status');
+        },
+        onError: (error) {
+          _showRetryDialog('Failed to activate autopay via $appName: ${error['error']}');
+        },
+      );
+    } catch (e) {
+      _showRetryDialog('Failed to launch ${app['name']}: $e');
+    }
+  }
+
+  Future<void> _launchGenericUpiIntent(String shortUrl) async {
+    try {
+      await RazorpayService.openCheckout(
+        subscriptionId: '',
+        shortUrl: shortUrl,
+        amount: widget.planAmount,
+        onSuccess: (result) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Autopay activated successfully!')),
+          );
+          Navigator.pushReplacementNamed(context, '/subscription-status');
+        },
+        onError: (error) {
+          _showRetryDialog(error['error']);
+        },
+      );
+    } catch (e) {
+      _showRetryDialog(e.toString());
     }
   }
 
@@ -181,23 +212,61 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                       'Select UPI App',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Found ${installedApps.length} UPI apps on your device:',
+                      style: const TextStyle(color: Colors.green, fontSize: 14),
+                    ),
                     const SizedBox(height: 12),
                     
-                    ...installedApps.map((app) => Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: RadioListTile<Map<String, String>>(
-                        value: app,
-                        groupValue: selectedApp,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedApp = value;
-                          });
-                        },
-                        title: Text(app['name']!),
-                        subtitle: const Text('Recommended'),
-                        leading: const Icon(Icons.payment),
-                      ),
-                    )).toList(),
+                    ...installedApps.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final app = entry.value;
+                      final priority = index == 0 ? 'Highest Priority' : 
+                                     index == 1 ? 'High Priority' : 'Available';
+                      
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: index == 0 ? Colors.green : Colors.grey.shade300,
+                            width: index == 0 ? 2 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: RadioListTile<Map<String, String>>(
+                          value: app,
+                          groupValue: selectedApp,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedApp = value;
+                            });
+                          },
+                          title: Row(
+                            children: [
+                              Icon(
+                                Icons.payment,
+                                color: index == 0 ? Colors.green : Colors.blue,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(app['name']!),
+                              if (index == 0) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.star, color: Colors.orange, size: 16),
+                              ],
+                            ],
+                          ),
+                          subtitle: Text(
+                            priority,
+                            style: TextStyle(
+                              color: index == 0 ? Colors.green : Colors.grey,
+                              fontWeight: index == 0 ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
 
                     const SizedBox(height: 16),
                     

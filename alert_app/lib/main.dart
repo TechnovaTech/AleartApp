@@ -18,10 +18,8 @@ import 'widgets/language_wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize basic services that work immediately
+  // Initialize only critical services
   await LocalizationService.loadLanguage();
-  await VoiceAlertService.initialize();
-  await DeviceInfoService.updateLoginTimestamp();
   
   runApp(const MyApp());
 }
@@ -81,10 +79,14 @@ class _MyAppState extends State<MyApp> {
         '/language-selection': (context) => const LanguageSelectionScreen(),
         '/consent': (context) => const ConsentScreen(),
         '/mandate-approval': (context) => const MandateApprovalScreen(),
-        '/upi-setup': (context) => UpiSetupScreen(
-          userId: ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?['userId'] ?? '',
-          planId: ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?['planId'] ?? '',
-        ),
+        '/upi-setup': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
+          return UpiSetupScreen(
+            userId: args['userId'] ?? '',
+            planId: args['planId'] ?? '',
+            planAmount: args['planAmount']?.toDouble(),
+          );
+        },
       },
     );
   }
@@ -127,7 +129,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
@@ -136,10 +138,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // If user already logged in, go directly to main home screen
     if (_isLoggedIn) {
-      return HomeScreenMain();
+      return const HomeScreen();
     } else {
       // If not logged in, show login page
-      return LoginScreen();
+      return const LoginScreen();
     }
   }
 }

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect()
     
-    const { userId, planId } = await request.json()
+    const { userId, planId, amount } = await request.json()
     
     if (!userId || !planId) {
       return NextResponse.json({ 
@@ -70,10 +70,14 @@ export async function POST(request: NextRequest) {
     subscription.nextRenewalDate = new Date(Date.now() + (plan.duration === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000)
     await subscription.save()
     
+    // Create UPI payment URL with actual amount
+    const upiUrl = `upi://pay?pa=merchant@razorpay&pn=AlertPe&tr=${Date.now()}&tn=Subscription Payment&am=${amount || plan.price}&cu=INR`
+    
     return NextResponse.json({ 
       success: true, 
       subscriptionId: razorpaySubscription.id,
-      shortUrl: razorpaySubscription.short_url
+      shortUrl: razorpaySubscription.short_url || upiUrl,
+      amount: amount || plan.price
     }, { headers: corsHeaders })
     
   } catch (error: any) {

@@ -11,25 +11,63 @@ class SubscriptionScreen extends StatefulWidget {
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
   bool isLoading = false;
-  Map<String, dynamic>? planData;
+  bool isLoadingPlans = true;
+  List<Map<String, dynamic>> plans = [];
+  int selectedPlanIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadPlan();
+    _loadPlans();
   }
 
-  Future<void> _loadPlan() async {
+  Future<void> _loadPlans() async {
     try {
+      print('Loading plans from API...');
       final response = await ApiService.get('/plans');
-      if (response['success'] && response['plans'].isNotEmpty) {
+      print('Plans API response: $response');
+      
+      if (response['success'] && response['plans'] != null) {
+        final plansList = List<Map<String, dynamic>>.from(response['plans']);
+        print('Loaded ${plansList.length} plans from API');
+        
         setState(() {
-          planData = response['plans'][0]; // Single plan
+          plans = plansList;
+          isLoadingPlans = false;
+          if (plans.isNotEmpty) {
+            selectedPlanIndex = 0;
+          }
         });
+      } else {
+        print('API failed, using fallback plans');
+        _useFallbackPlans();
       }
     } catch (e) {
-      // Handle error
+      print('Error loading plans: $e');
+      _useFallbackPlans();
     }
+  }
+  
+  void _useFallbackPlans() {
+    setState(() {
+      plans = [
+        {
+          '_id': 'basic_plan',
+          'name': 'Basic Plan',
+          'price': 99,
+          'duration': 'monthly',
+          'features': ['SMS monitoring', 'Basic reports', 'Email support']
+        },
+        {
+          '_id': 'premium_plan', 
+          'name': 'Premium Plan',
+          'price': 199,
+          'duration': 'monthly',
+          'features': ['Unlimited SMS monitoring', 'Advanced analytics', 'PDF reports', 'Priority support', 'No ads']
+        },
+      ];
+      isLoadingPlans = false;
+    });
   }
 
   Future<void> _startSubscription() async {
@@ -41,13 +79,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       final userData = await ApiService.getCachedUserData();
       if (userData == null) return;
 
+      final selectedPlan = plans[selectedPlanIndex];
+      
       // Navigate to UPI setup screen
       Navigator.pushNamed(
         context,
         '/upi-setup',
         arguments: {
-          'userId': userData['_id'],
-          'planId': planData?['_id'] ?? 'default_plan',
+          'userId': userData['id'] ?? userData['_id'],
+          'planId': selectedPlan['_id'],
+          'planAmount': selectedPlan['price'],
         },
       );
     } catch (e) {
@@ -69,7 +110,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: isLoadingPlans
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -115,110 +158,176 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             
             const SizedBox(height: 24),
             
-            // Plan Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.blue, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'Premium Plan',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+            // Plan Selection
+            if (plans.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: const Text('No plans available'),
+              )
+            else
+              ...plans.asMap().entries.map((entry) {
+                final index = entry.key;
+                final plan = entry.value;
+                final isSelected = selectedPlanIndex == index;
+                final features = plan['features'] is List 
+                    ? List<String>.from(plan['features']) 
+                    : <String>[];
+                
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? Colors.blue : Colors.grey[300]!,
+                      width: isSelected ? 2 : 1,
                     ),
+                    boxShadow: isSelected ? [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ] : [],
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        '₹',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '${planData?['price'] ?? 299}',
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        '/month',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Features
-                  const Column(
-                    children: [
-                      _FeatureItem(text: 'Unlimited SMS monitoring'),
-                      _FeatureItem(text: 'Advanced analytics'),
-                      _FeatureItem(text: 'PDF reports'),
-                      _FeatureItem(text: 'Priority support'),
-                      _FeatureItem(text: 'No ads'),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Subscribe Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _startSubscription,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Start 7-Day Free Trial',
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedPlanIndex = index;
+                      });
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              plan['name'] ?? 'Plan',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: isSelected ? Colors.blue : Colors.grey[800],
                               ),
                             ),
+                            if (isSelected)
+                              Icon(Icons.check_circle, color: Colors.blue),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '₹${plan['price'] ?? 0}',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? Colors.blue : Colors.grey[800],
+                              ),
+                            ),
+                            Text(
+                              '/${plan['duration'] ?? 'month'}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ...features.map<Widget>((feature) => 
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: isSelected ? Colors.blue : Colors.green,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    feature,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ).toList(),
+                      ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  const Text(
-                    'Cancel anytime. No commitment.',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
+                );
+              }).toList(),
+            
+            // UPI Info
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'UPI Autopay Options:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
+                  SizedBox(height: 8),
+                  Text('✓ PhonePe (Recommended)'),
+                  Text('✓ Google Pay'),
+                  Text('✓ Paytm'),
+                  Text('✓ BHIM & other UPI apps'),
                 ],
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Subscribe Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _startSubscription,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        plans.isNotEmpty 
+                            ? 'Setup UPI Autopay - ₹${plans[selectedPlanIndex]['price']}/month'
+                            : 'Setup UPI Autopay',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+            
+            const SizedBox(height: 12),
+            
+            const Text(
+              'Cancel anytime. No commitment.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
               ),
             ),
           ],
@@ -228,29 +337,3 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 }
 
-class _FeatureItem extends StatelessWidget {
-  final String text;
-  
-  const _FeatureItem({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: const TextStyle(fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-}

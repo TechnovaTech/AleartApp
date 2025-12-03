@@ -17,6 +17,11 @@ class UpiAppDetectionService {
       'icon': 'assets/images/payment_icons/icons8-google-pay.png',
     },
     {
+      'name': 'GPay',
+      'packageName': 'com.google.android.apps.walletnfcrel',
+      'icon': 'assets/images/payment_icons/icons8-google-pay.png',
+    },
+    {
       'name': 'Paytm',
       'packageName': 'net.one97.paytm',
       'icon': 'assets/images/payment_icons/icons8-paytm.png',
@@ -31,29 +36,36 @@ class UpiAppDetectionService {
       'packageName': 'in.amazon.mShop.android.shopping',
       'icon': 'assets/images/payment_icons/amazon-pay-svgrepo-com.png',
     },
+    {
+      'name': 'MobiKwik',
+      'packageName': 'com.mobikwik_new',
+      'icon': 'assets/images/payment_icons/mobikwik.png',
+    },
+    {
+      'name': 'Freecharge',
+      'packageName': 'com.freecharge.android',
+      'icon': 'assets/images/payment_icons/freecharge.png',
+    },
+    {
+      'name': 'JioMoney',
+      'packageName': 'com.ril.jio.jiomoney',
+      'icon': 'assets/images/payment_icons/jiomoney.png',
+    },
   ];
 
   static Future<List<Map<String, String>>> getInstalledUpiApps() async {
     try {
-      final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-      final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      
-      // For Android API level 30+, we need special permission to query packages
-      if (androidInfo.version.sdkInt >= 30) {
-        return await _getInstalledAppsWithPermission();
-      } else {
-        return await _getInstalledAppsLegacy();
-      }
+      // Return top 4 most common UPI apps to avoid performance issues
+      return _upiApps.take(4).toList();
     } catch (e) {
-      // Fallback: return all apps (user will manually select)
-      return _upiApps;
+      return _upiApps.take(4).toList();
     }
   }
 
   static Future<List<Map<String, String>>> _getInstalledAppsWithPermission() async {
     try {
-      final List<AppInfo> installedApps = await InstalledApps.getInstalledApps(true, true);
-      final List<String> installedPackages = installedApps.map((app) => app.packageName).toList();
+      final installedApps = await InstalledApps.getInstalledApps(true, true);
+      final List<String> installedPackages = installedApps.map((app) => app.packageName as String).toList();
       
       return _upiApps.where((app) {
         return installedPackages.contains(app['packageName']);
@@ -65,8 +77,8 @@ class UpiAppDetectionService {
 
   static Future<List<Map<String, String>>> _getInstalledAppsLegacy() async {
     try {
-      final List<AppInfo> installedApps = await InstalledApps.getInstalledApps(false, false);
-      final List<String> installedPackages = installedApps.map((app) => app.packageName).toList();
+      final installedApps = await InstalledApps.getInstalledApps(false, false);
+      final List<String> installedPackages = installedApps.map((app) => app.packageName as String).toList();
       
       return _upiApps.where((app) {
         return installedPackages.contains(app['packageName']);
@@ -80,10 +92,14 @@ class UpiAppDetectionService {
     // Strict priority order: PhonePe > Google Pay > Paytm > Others
     final List<String> priorityOrder = [
       'com.phonepe.app',
-      'com.google.android.apps.nfc.payment', 
+      'com.google.android.apps.nfc.payment',
+      'com.google.android.apps.walletnfcrel',
       'net.one97.paytm',
       'in.org.npci.upiapp',
       'in.amazon.mShop.android.shopping',
+      'com.mobikwik_new',
+      'com.freecharge.android',
+      'com.ril.jio.jiomoney',
     ];
 
     final List<Map<String, String>> orderedApps = [];

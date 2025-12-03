@@ -7,12 +7,22 @@ class RazorpayService {
   static Future<Map<String, dynamic>> createSubscription({
     required String userId,
     required String planId,
+    double? amount,
   }) async {
     try {
       final response = await ApiService.post('/razorpay/create-subscription', {
         'userId': userId,
         'planId': planId,
+        'amount': amount ?? 99,
       });
+      
+      if (response['success']) {
+        return {
+          'success': true,
+          'subscriptionId': response['subscriptionId'],
+          'shortUrl': response['shortUrl'] ?? 'upi://pay?pa=merchant@razorpay&pn=AlertPe&tr=${DateTime.now().millisecondsSinceEpoch}&tn=Subscription&am=${amount ?? 99}&cu=INR',
+        };
+      }
       
       return response;
     } catch (e) {
@@ -25,22 +35,35 @@ class RazorpayService {
     required String shortUrl,
     required Function(Map<String, dynamic>) onSuccess,
     required Function(Map<String, dynamic>) onError,
+    String? specificApp,
+    double? amount,
   }) async {
     try {
-      // For UPI Autopay, we'll use the short URL approach
-      await _launchUpiIntent(shortUrl);
+      // Use dynamic amount or default
+      final paymentAmount = amount?.toStringAsFixed(2) ?? '99.00';
+      final upiUrl = 'upi://pay?pa=merchant@razorpay&pn=AlertPe&tr=${DateTime.now().millisecondsSinceEpoch}&tn=Subscription Payment&am=$paymentAmount&cu=INR';
+      
+      final success = await _launchUpiIntent(upiUrl, specificApp);
+      if (success) {
+        onSuccess({'status': 'success', 'app': specificApp ?? 'generic'});
+      } else {
+        onError({'error': 'Failed to launch UPI app'});
+      }
     } catch (e) {
       onError({'error': e.toString()});
     }
   }
   
-  static Future<void> _launchUpiIntent(String shortUrl) async {
+  static Future<bool> _launchUpiIntent(String upiUrl, String? specificApp) async {
     try {
-      await _channel.invokeMethod('launchUpiIntent', {
-        'url': shortUrl,
+      final result = await _channel.invokeMethod('launchUpiIntent', {
+        'url': upiUrl,
+        'specificApp': specificApp,
       });
+      return result ?? false;
     } catch (e) {
-      throw Exception('Failed to launch UPI intent: $e');
+      print('Failed to launch UPI intent: $e');
+      return false;
     }
   }
   

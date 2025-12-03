@@ -23,8 +23,13 @@ class RazorpayPlugin: FlutterPlugin, MethodCallHandler {
         when (call.method) {
             "launchUpiIntent" -> {
                 val url = call.argument<String>("url")
+                val specificApp = call.argument<String>("specificApp")
                 if (url != null) {
-                    launchUpiIntent(url, result)
+                    if (specificApp != null) {
+                        launchSpecificUpiApp(url, specificApp, result)
+                    } else {
+                        launchUpiIntent(url, result)
+                    }
                 } else {
                     result.error("INVALID_ARGUMENT", "URL is required", null)
                 }
@@ -37,18 +42,38 @@ class RazorpayPlugin: FlutterPlugin, MethodCallHandler {
 
     private fun launchUpiIntent(url: String, result: Result) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val upiIntent = Intent(Intent.ACTION_VIEW)
+            upiIntent.data = Uri.parse(url)
+            upiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             
-            // Check if any app can handle this intent
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
+            if (upiIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(upiIntent)
                 result.success(true)
             } else {
-                result.error("NO_APP", "No app found to handle UPI payment", null)
+                result.error("NO_APP", "No UPI app found to handle payment", null)
             }
         } catch (e: Exception) {
             result.error("LAUNCH_ERROR", "Failed to launch UPI intent: ${e.message}", null)
+        }
+    }
+
+    private fun launchSpecificUpiApp(url: String, packageName: String, result: Result) {
+        try {
+            val upiIntent = Intent(Intent.ACTION_VIEW)
+            upiIntent.data = Uri.parse(url)
+            upiIntent.setPackage(packageName)
+            upiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            
+            if (upiIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(upiIntent)
+                result.success(true)
+            } else {
+                // Fallback to generic intent
+                launchUpiIntent(url, result)
+            }
+        } catch (e: Exception) {
+            // Fallback to generic intent
+            launchUpiIntent(url, result)
         }
     }
 
