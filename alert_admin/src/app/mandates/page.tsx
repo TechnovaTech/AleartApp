@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { CreditCard, User, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react'
+import DashboardLayout from '../../components/DashboardLayout'
 
 interface Mandate {
   _id: string
@@ -65,7 +66,8 @@ export default function MandatesPage() {
   }
 
   return (
-    <div className="p-6">
+    <DashboardLayout>
+      <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Mandate Management</h1>
         <p className="text-gray-600">Manage autopay mandates for subscriptions</p>
@@ -185,7 +187,8 @@ export default function MandatesPage() {
             </tbody>
           </table>
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

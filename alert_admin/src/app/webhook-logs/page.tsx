@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Webhook, Calendar, CheckCircle, XCircle } from 'lucide-react'
+import DashboardLayout from '../../components/DashboardLayout'
 
 interface WebhookLog {
   _id: string
@@ -46,7 +47,8 @@ export default function WebhookLogsPage() {
   }
 
   return (
-    <div className="p-6">
+    <DashboardLayout>
+      <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Mock Razorpay Webhook Logs</h1>
         <p className="text-gray-600">Monitor webhook events from mock Razorpay integration</p>
@@ -149,7 +151,8 @@ export default function WebhookLogsPage() {
             </tbody>
           </table>
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

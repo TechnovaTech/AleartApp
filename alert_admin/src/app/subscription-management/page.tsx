@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Users, Calendar, CreditCard, AlertCircle } from 'lucide-react'
+import DashboardLayout from '../../components/DashboardLayout'
 
 interface Subscription {
   _id: string
@@ -52,7 +53,8 @@ export default function SubscriptionManagementPage() {
   }
 
   return (
-    <div className="p-6">
+    <DashboardLayout>
+      <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Subscription Management</h1>
         <p className="text-gray-600">Manage user subscriptions and billing</p>
@@ -163,7 +165,8 @@ export default function SubscriptionManagementPage() {
             </tbody>
           </table>
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

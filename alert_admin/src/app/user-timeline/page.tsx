@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Activity, User, Calendar } from 'lucide-react'
+import DashboardLayout from '../../components/DashboardLayout'
 
 interface TimelineEvent {
   _id: string
@@ -73,7 +74,8 @@ export default function UserTimelinePage() {
   const uniqueUsers = Array.from(new Set(events.map(event => event.userId)))
 
   return (
-    <div className="p-6">
+    <DashboardLayout>
+      <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">User Timeline</h1>
         <p className="text-gray-600">Track user activities and events</p>
@@ -178,7 +180,8 @@ export default function UserTimelinePage() {
             ))}
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
