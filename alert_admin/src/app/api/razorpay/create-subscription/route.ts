@@ -16,10 +16,14 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  let amount: number | undefined
+  
   try {
     await dbConnect()
     
-    const { userId, planId, amount } = await request.json()
+    const requestData = await request.json()
+    const { userId, planId } = requestData
+    amount = requestData.amount
     
     if (!userId || !planId) {
       return NextResponse.json({ 
@@ -123,7 +127,7 @@ export async function POST(request: NextRequest) {
     console.error('Subscription creation error:', error)
     
     // Fallback response with simple UPI link
-    const fallbackAmount = amount || 1
+    const fallbackAmount = (amount as number) || 1
     const fallbackTransactionId = `TXN${Date.now()}`
     const fallbackUpiLink = `upi://pay?pa=hello.technovatechnologies@paytm&pn=AlertPe&tr=${fallbackTransactionId}&tn=Subscription&am=${fallbackAmount}&cu=INR`
     
