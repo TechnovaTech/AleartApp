@@ -37,18 +37,34 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
   }
 
   Future<void> _detectUpiApps() async {
-    setState(() {
-      // Show top 4 UPI apps directly
-      installedApps = [
+    try {
+      // Always show common UPI apps for user selection
+      final commonApps = [
         {'name': 'PhonePe', 'packageName': 'com.phonepe.app'},
         {'name': 'Google Pay', 'packageName': 'com.google.android.apps.nfc.payment'},
+        {'name': 'GPay', 'packageName': 'com.google.android.apps.walletnfcrel'},
         {'name': 'Paytm', 'packageName': 'net.one97.paytm'},
         {'name': 'BHIM', 'packageName': 'in.org.npci.upiapp'},
+        {'name': 'Amazon Pay', 'packageName': 'in.amazon.mShop.android.shopping'},
       ];
-      selectedApp = installedApps.first;
-      showManualEntry = false;
-      isLoading = false;
-    });
+      
+      setState(() {
+        installedApps = commonApps;
+        selectedApp = commonApps.first; // Default to PhonePe
+        showManualEntry = false;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        installedApps = [
+          {'name': 'PhonePe', 'packageName': 'com.phonepe.app'},
+          {'name': 'Paytm', 'packageName': 'net.one97.paytm'},
+        ];
+        selectedApp = installedApps.first;
+        showManualEntry = false;
+        isLoading = false;
+      });
+    }
   }
 
 
@@ -73,12 +89,13 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
         amount: widget.planAmount,
       );
 
-      if (response['success']) {
-        final paymentUrl = response['shortUrl'] ?? response['paymentUrl'];
-        
+      if (response['success'] == true) {
         final upiLink = response['upiLink'] ?? response['shortUrl'];
+        final paymentUrl = response['paymentUrl'];
         
-        if (upiLink != null) {
+        print('Payment response: $response');
+        
+        if (upiLink != null && upiLink.isNotEmpty) {
           // Launch payment with selected UPI app
           final specificApp = selectedApp?['packageName'];
           
@@ -95,18 +112,17 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                   duration: const Duration(seconds: 3),
                 ),
               );
-              // Don't navigate immediately, let user complete payment
             },
             onError: (error) {
-              // Try opening in browser as fallback
-              _showRetryDialog('UPI app failed to open. Try again or use browser payment.');
+              _showRetryDialog('UPI app failed to open. Try browser payment.');
             },
           );
         } else {
-          _showRetryDialog('No payment URL received');
+          _showRetryDialog('Payment setup failed. Please try again.');
         }
       } else {
-        _showRetryDialog(response['error'] ?? 'Failed to create subscription');
+        final errorMsg = response['error'] ?? 'Unknown error occurred';
+        _showRetryDialog('Setup failed: $errorMsg');
       }
     } catch (e) {
       _showRetryDialog('Network error: $e');
@@ -254,12 +270,16 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                   const SizedBox(height: 24),
 
                   // UPI App Selection
-                  if (installedApps.isNotEmpty) ...[
-                    const Text(
-                      'Select Payment App',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
+                  const Text(
+                    'Select Payment App',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Choose your preferred UPI app:',
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                  const SizedBox(height: 12),
                     
                     ...installedApps.asMap().entries.map((entry) {
                       final index = entry.key;
@@ -308,21 +328,7 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                       );
                     }).toList(),
                     
-                    const SizedBox(height: 16),
-                  ] else ...[
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'No UPI apps found. Payment will open in browser.',
-                        style: TextStyle(color: Colors.orange),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                  const SizedBox(height: 16),
 
                   const SizedBox(height: 32),
 
