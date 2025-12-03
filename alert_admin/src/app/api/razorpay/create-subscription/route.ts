@@ -81,8 +81,9 @@ export async function POST(request: NextRequest) {
     subscription.status = 'pending'
     await subscription.save()
     
-    // Create UPI deep link that opens in payment apps
-    const upiDeepLink = `upi://pay?pa=razorpay@icici&pn=AlertPe&tr=${razorpayPaymentLink.id}&tn=Subscription Payment&am=${amount || plan.price}&cu=INR&url=${encodeURIComponent(razorpayPaymentLink.short_url)}`
+    // Create proper UPI deep link that opens directly in payment apps
+    const transactionId = `TXN${Date.now()}`
+    const upiDeepLink = `upi://pay?pa=hello.technovatechnologies@paytm&pn=AlertPe&tr=${transactionId}&tn=Subscription&am=${amount || plan.price}&cu=INR`
     
     return NextResponse.json({ 
       success: true, 
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
       shortUrl: upiDeepLink,
       paymentUrl: razorpayPaymentLink.short_url,
       upiLink: upiDeepLink,
+      transactionId: transactionId,
       amount: amount || plan.price
     }, { headers: corsHeaders })
     

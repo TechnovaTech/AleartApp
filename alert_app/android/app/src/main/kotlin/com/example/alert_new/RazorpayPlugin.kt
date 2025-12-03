@@ -87,17 +87,29 @@ class RazorpayPlugin: FlutterPlugin, MethodCallHandler {
             upiIntent.data = Uri.parse(url)
             upiIntent.setPackage(packageName)
             upiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            upiIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             
-            if (upiIntent.resolveActivity(context.packageManager) != null) {
+            // Check if the specific app can handle UPI
+            val resolveInfo = context.packageManager.resolveActivity(upiIntent, 0)
+            if (resolveInfo != null) {
                 context.startActivity(upiIntent)
                 result.success(true)
+                return
+            }
+            
+            // Try without package restriction
+            val genericIntent = Intent(Intent.ACTION_VIEW)
+            genericIntent.data = Uri.parse(url)
+            genericIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            
+            if (genericIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(genericIntent)
+                result.success(true)
             } else {
-                // Fallback to generic intent
-                launchUpiIntent(url, result)
+                result.error("NO_APP", "No UPI app found", null)
             }
         } catch (e: Exception) {
-            // Fallback to generic intent
-            launchUpiIntent(url, result)
+            result.error("LAUNCH_ERROR", "Failed to launch UPI app: ${e.message}", null)
         }
     }
 

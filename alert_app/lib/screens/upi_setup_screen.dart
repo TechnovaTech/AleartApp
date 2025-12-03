@@ -89,12 +89,17 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
             amount: widget.planAmount,
             onSuccess: (result) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Payment opened in ${selectedApp?['name'] ?? 'payment app'}!')),
+                SnackBar(
+                  content: Text('${selectedApp?['name'] ?? 'Payment app'} opened! Complete payment to activate subscription.'),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 3),
+                ),
               );
-              Navigator.pushReplacementNamed(context, '/subscription-status');
+              // Don't navigate immediately, let user complete payment
             },
             onError: (error) {
-              _showRetryDialog('Failed to open payment: ${error['error']}');
+              // Try opening in browser as fallback
+              _showRetryDialog('UPI app failed to open. Try again or use browser payment.');
             },
           );
         } else {
@@ -162,19 +167,43 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Setup Failed'),
-        content: Text('UPI Autopay setup failed: $error'),
+        title: const Text('Payment App Issue'),
+        content: Text(error),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // Try opening in browser
+              final response = await RazorpayService.createSubscription(
+                userId: widget.userId,
+                planId: widget.planId,
+                amount: widget.planAmount,
+              );
+              if (response['success'] && response['paymentUrl'] != null) {
+                await RazorpayService.openCheckout(
+                  subscriptionId: '',
+                  shortUrl: response['paymentUrl'],
+                  onSuccess: (result) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Payment page opened in browser!')),
+                    );
+                  },
+                  onError: (error) {},
+                );
+              }
+            },
+            child: const Text('Open in Browser'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _activateAutopay();
             },
-            child: const Text('Retry'),
+            child: const Text('Retry UPI App'),
           ),
         ],
       ),
