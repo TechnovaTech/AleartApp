@@ -15,18 +15,26 @@ import {
   X,
   LogOut,
   FileText,
-  Home
+  Home,
+  Calendar,
+  Activity,
+  Webhook,
+  Shield
 } from 'lucide-react'
 
 const modules = [
   { id: '', name: 'Dashboard', icon: Home },
   { id: 'users', name: 'User Management', icon: Users },
   { id: 'payments', name: 'Payment Monitoring', icon: CreditCard },
+  { id: 'subscription-management', name: 'Subscriptions', icon: CreditCard },
+  { id: 'mandates', name: 'Mandate Management', icon: Shield },
   { id: 'qr', name: 'QR Code Management', icon: QrCode },
-  { id: 'plans', name: 'Plans & Subscriptions', icon: CreditCard },
+  { id: 'plans', name: 'Plans & Pricing', icon: Calendar },
+  { id: 'trial-settings', name: 'Trial Settings', icon: Settings },
+  { id: 'user-timeline', name: 'User Timeline', icon: Activity },
+  { id: 'webhook-logs', name: 'Webhook Logs', icon: Webhook },
   { id: 'analytics', name: 'Analytics', icon: BarChart3 },
   { id: 'notifications', name: 'Notifications', icon: Bell },
-  { id: 'settings', name: 'Settings', icon: Settings },
   { id: 'reports', name: 'Reports', icon: FileText },
   { id: 'support', name: 'Support', icon: HelpCircle },
 ]
