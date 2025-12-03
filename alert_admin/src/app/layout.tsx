@@ -1,4 +1,5 @@
 import './globals.css'
+import DashboardLayout from '@/components/DashboardLayout'
 
 export const metadata = {
   title: 'AlertPe Admin Panel',
@@ -12,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <DashboardLayout>{children}</DashboardLayout>
+      </body>
     </html>
   )
 }
