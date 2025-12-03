@@ -81,11 +81,15 @@ export async function POST(request: NextRequest) {
     subscription.status = 'pending'
     await subscription.save()
     
+    // Create UPI deep link that opens in payment apps
+    const upiDeepLink = `upi://pay?pa=razorpay@icici&pn=AlertPe&tr=${razorpayPaymentLink.id}&tn=Subscription Payment&am=${amount || plan.price}&cu=INR&url=${encodeURIComponent(razorpayPaymentLink.short_url)}`
+    
     return NextResponse.json({ 
       success: true, 
       subscriptionId: razorpayPaymentLink.id,
-      shortUrl: razorpayPaymentLink.short_url,
+      shortUrl: upiDeepLink,
       paymentUrl: razorpayPaymentLink.short_url,
+      upiLink: upiDeepLink,
       amount: amount || plan.price
     }, { headers: corsHeaders })
     

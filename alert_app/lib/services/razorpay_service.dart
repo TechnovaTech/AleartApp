@@ -39,12 +39,30 @@ class RazorpayService {
     double? amount,
   }) async {
     try {
-      // Launch Razorpay payment link
-      final success = await _launchPaymentUrl(shortUrl);
+      // Try to launch UPI app first if it's a UPI link
+      bool success = false;
+      
+      if (shortUrl.startsWith('upi://')) {
+        // Try specific UPI app first
+        if (specificApp != null) {
+          success = await _launchUpiIntent(shortUrl, specificApp);
+        }
+        
+        // If specific app failed or not specified, try generic UPI
+        if (!success) {
+          success = await _launchUpiIntent(shortUrl, null);
+        }
+      }
+      
+      // If UPI failed, try browser
+      if (!success) {
+        success = await _launchPaymentUrl(shortUrl);
+      }
+      
       if (success) {
         onSuccess({'status': 'success', 'paymentUrl': shortUrl});
       } else {
-        onError({'error': 'Failed to open payment page'});
+        onError({'error': 'Failed to open payment'});
       }
     } catch (e) {
       onError({'error': e.toString()});
@@ -59,6 +77,19 @@ class RazorpayService {
       return result ?? false;
     } catch (e) {
       print('Failed to launch payment URL: $e');
+      return false;
+    }
+  }
+  
+  static Future<bool> _launchUpiIntent(String upiUrl, String? specificApp) async {
+    try {
+      final result = await _channel.invokeMethod('launchUpiIntent', {
+        'url': upiUrl,
+        'specificApp': specificApp,
+      });
+      return result ?? false;
+    } catch (e) {
+      print('Failed to launch UPI intent: $e');
       return false;
     }
   }

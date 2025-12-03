@@ -76,15 +76,20 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
       if (response['success']) {
         final paymentUrl = response['shortUrl'] ?? response['paymentUrl'];
         
-        if (paymentUrl != null) {
-          // Launch Razorpay payment page
+        final upiLink = response['upiLink'] ?? response['shortUrl'];
+        
+        if (upiLink != null) {
+          // Launch payment with selected UPI app
+          final specificApp = selectedApp?['packageName'];
+          
           await RazorpayService.openCheckout(
             subscriptionId: response['subscriptionId'] ?? '',
-            shortUrl: paymentUrl,
+            shortUrl: upiLink,
+            specificApp: specificApp,
             amount: widget.planAmount,
             onSuccess: (result) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Payment page opened successfully!')),
+                SnackBar(content: Text('Payment opened in ${selectedApp?['name'] ?? 'payment app'}!')),
               );
               Navigator.pushReplacementNamed(context, '/subscription-status');
             },
@@ -219,29 +224,76 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Payment Methods
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
+                  // UPI App Selection
+                  if (installedApps.isNotEmpty) ...[
+                    const Text(
+                      'Select Payment App',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Payment Methods Available:',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    const SizedBox(height: 12),
+                    
+                    ...installedApps.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final app = entry.value;
+                      final isSelected = selectedApp == app;
+                      
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey.shade300,
+                            width: isSelected ? 2 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(height: 12),
-                        _buildPaymentMethod(Icons.account_balance_wallet, 'UPI (PhonePe, GPay, Paytm)', 'Instant payment'),
-                        _buildPaymentMethod(Icons.credit_card, 'Credit/Debit Cards', 'Visa, Mastercard, RuPay'),
-                        _buildPaymentMethod(Icons.account_balance, 'Net Banking', 'All major banks'),
-                        _buildPaymentMethod(Icons.wallet, 'Wallets', 'Paytm, PhonePe, Amazon Pay'),
-                      ],
+                        child: RadioListTile<Map<String, String>>(
+                          value: app,
+                          groupValue: selectedApp,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedApp = value;
+                            });
+                          },
+                          title: Row(
+                            children: [
+                              Icon(
+                                Icons.payment,
+                                color: isSelected ? Colors.blue : Colors.grey,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(app['name']!),
+                              if (index == 0) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.star, color: Colors.orange, size: 16),
+                              ],
+                            ],
+                          ),
+                          subtitle: Text(
+                            index == 0 ? 'Recommended' : 'Available',
+                            style: TextStyle(
+                              color: isSelected ? Colors.blue : Colors.grey,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'No UPI apps found. Payment will open in browser.',
+                        style: TextStyle(color: Colors.orange),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                  ],
 
                   const SizedBox(height: 32),
 
@@ -252,19 +304,19 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                       color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Payment Process:',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 8),
-                        Text('1. Click "Pay Now" below'),
-                        Text('2. Razorpay payment page will open'),
-                        Text('3. Choose your preferred payment method'),
-                        Text('4. Complete the payment securely'),
-                        Text('5. Your subscription will be activated'),
+                        const SizedBox(height: 8),
+                        const Text('1. Select your preferred UPI app above'),
+                        const Text('2. Click "Pay Now" below'),
+                        Text('3. ${selectedApp?['name'] ?? 'Payment app'} will open'),
+                        const Text('4. Complete the payment securely'),
+                        const Text('5. Your subscription will be activated'),
                       ],
                     ),
                   ),
