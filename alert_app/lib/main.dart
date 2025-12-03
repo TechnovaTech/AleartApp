@@ -10,11 +10,18 @@ import 'screens/consent_screen.dart';
 import 'screens/mandate_approval_screen.dart';
 import 'services/localization_service.dart';
 import 'services/api_service.dart';
+import 'services/voice_alert_service.dart';
+import 'services/device_info_service.dart';
 import 'widgets/language_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize basic services that work immediately
   await LocalizationService.loadLanguage();
+  await VoiceAlertService.initialize();
+  await DeviceInfoService.updateLoginTimestamp();
+  
   runApp(const MyApp());
 }
 

@@ -20,6 +20,8 @@ import android.net.Uri
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "payment_notifications"
     private val EVENT_CHANNEL = "payment_events"
+    private val NOTIFICATION_LISTENER_CHANNEL = "notification_listener"
+    private val BACKGROUND_SERVICE_CHANNEL = "background_service"
     private val PERMISSION_REQUEST_CODE = 123
     
     companion object {
@@ -45,6 +47,44 @@ class MainActivity: FlutterActivity() {
                 }
                 "checkPermissions" -> {
                     result.success(checkBasicPermissions())
+                }
+                else -> result.notImplemented()
+            }
+        }
+        
+        // Notification Listener Channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NOTIFICATION_LISTENER_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "requestPermission" -> {
+                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                    startActivity(intent)
+                    result.success(true)
+                }
+                "isPermissionGranted" -> {
+                    result.success(isNotificationListenerEnabled())
+                }
+                else -> result.notImplemented()
+            }
+        }
+        
+        // Background Service Channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BACKGROUND_SERVICE_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startBackgroundService" -> {
+                    startBackgroundService()
+                    result.success(true)
+                }
+                "stopBackgroundService" -> {
+                    stopBackgroundService()
+                    result.success(true)
+                }
+                "requestAutoStart" -> {
+                    requestAutoStartPermission()
+                    result.success(true)
+                }
+                "requestBatteryOptimization" -> {
+                    requestBatteryOptimizationExemption()
+                    result.success(true)
                 }
                 else -> result.notImplemented()
             }
@@ -103,6 +143,49 @@ class MainActivity: FlutterActivity() {
             
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager?.createNotificationChannel(channel)
+        }
+    }
+    
+    private fun isNotificationListenerEnabled(): Boolean {
+        val packageName = packageName
+        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+        return flat?.contains(packageName) == true
+    }
+    
+    private fun startBackgroundService() {
+        val serviceIntent = Intent(this, BackgroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
+    }
+    
+    private fun stopBackgroundService() {
+        val serviceIntent = Intent(this, BackgroundService::class.java)
+        stopService(serviceIntent)
+    }
+    
+    private fun requestAutoStartPermission() {
+        try {
+            val intent = Intent()
+            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+            intent.data = Uri.fromParts("package", packageName, null)
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun requestBatteryOptimizationExemption() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
