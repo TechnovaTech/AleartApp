@@ -41,32 +41,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       final userData = await ApiService.getCachedUserData();
       if (userData == null) return;
 
-      // Create real Razorpay subscription
-      final razorpayResponse = await RazorpayService.createSubscription(
-        userId: userData['_id'],
-        planId: planData?['_id'] ?? 'default_plan',
+      // Navigate to UPI setup screen
+      Navigator.pushNamed(
+        context,
+        '/upi-setup',
+        arguments: {
+          'userId': userData['_id'],
+          'planId': planData?['_id'] ?? 'default_plan',
+        },
       );
-
-      if (razorpayResponse['success']) {
-        // Launch UPI Autopay flow
-        await RazorpayService.openCheckout(
-          subscriptionId: razorpayResponse['subscriptionId'],
-          shortUrl: razorpayResponse['shortUrl'],
-          onSuccess: (response) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Subscription activated successfully!')),
-            );
-            Navigator.pushReplacementNamed(context, '/subscription-status');
-          },
-          onError: (error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Payment failed: ${error['error']}')),
-            );
-          },
-        );
-      } else {
-        throw Exception(razorpayResponse['error'] ?? 'Failed to create subscription');
-      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to start subscription: $e')),

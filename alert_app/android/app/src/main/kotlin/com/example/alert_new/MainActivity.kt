@@ -16,6 +16,7 @@ import android.app.NotificationManager
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
+import android.content.ComponentName
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "payment_notifications"
@@ -36,8 +37,9 @@ class MainActivity: FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        // Register Razorpay plugin
+        // Register plugins
         flutterEngine.plugins.add(RazorpayPlugin())
+        flutterEngine.plugins.add(DeviceCompatibilityPlugin())
         
         // Create notification channel with sound
         createNotificationChannel()
@@ -171,12 +173,41 @@ class MainActivity: FlutterActivity() {
     
     private fun requestAutoStartPermission() {
         try {
-            val intent = Intent()
-            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-            intent.data = Uri.fromParts("package", packageName, null)
+            // Try manufacturer-specific auto-start settings
+            val manufacturer = Build.MANUFACTURER.lowercase()
+            val intent = when {
+                manufacturer.contains("xiaomi") -> {
+                    Intent().apply {
+                        component = ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
+                    }
+                }
+                manufacturer.contains("oppo") -> {
+                    Intent().apply {
+                        component = ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")
+                    }
+                }
+                manufacturer.contains("vivo") -> {
+                    Intent().apply {
+                        component = ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")
+                    }
+                }
+                else -> {
+                    Intent().apply {
+                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                        data = Uri.fromParts("package", packageName, null)
+                    }
+                }
+            }
             startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Fallback to app settings
+            try {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.data = Uri.fromParts("package", packageName, null)
+                startActivity(intent)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
     

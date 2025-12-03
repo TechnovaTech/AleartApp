@@ -77,16 +77,18 @@ class UpiAppDetectionService {
   }
 
   static List<Map<String, String>> getPriorityOrderedApps(List<Map<String, String>> installedApps) {
-    // Priority order: PhonePe > Google Pay > Paytm > Others
+    // Strict priority order: PhonePe > Google Pay > Paytm > Others
     final List<String> priorityOrder = [
       'com.phonepe.app',
-      'com.google.android.apps.nfc.payment',
+      'com.google.android.apps.nfc.payment', 
       'net.one97.paytm',
+      'in.org.npci.upiapp',
+      'in.amazon.mShop.android.shopping',
     ];
 
     final List<Map<String, String>> orderedApps = [];
     
-    // Add apps in priority order
+    // Add apps in strict priority order only
     for (String packageName in priorityOrder) {
       final app = installedApps.firstWhere(
         (app) => app['packageName'] == packageName,
@@ -97,19 +99,21 @@ class UpiAppDetectionService {
       }
     }
     
-    // Add remaining apps
-    for (Map<String, String> app in installedApps) {
-      if (!priorityOrder.contains(app['packageName'])) {
-        orderedApps.add(app);
-      }
-    }
-    
     return orderedApps;
   }
 
   static String getRecommendedApp(List<Map<String, String>> installedApps) {
     final orderedApps = getPriorityOrderedApps(installedApps);
     return orderedApps.isNotEmpty ? orderedApps.first['name']! : 'Manual Entry';
+  }
+
+  static Map<String, String>? getTopPriorityApp(List<Map<String, String>> installedApps) {
+    final orderedApps = getPriorityOrderedApps(installedApps);
+    return orderedApps.isNotEmpty ? orderedApps.first : null;
+  }
+
+  static bool hasAnyUpiApp(List<Map<String, String>> installedApps) {
+    return getPriorityOrderedApps(installedApps).isNotEmpty;
   }
 
   static bool isValidUpiId(String upiId) {

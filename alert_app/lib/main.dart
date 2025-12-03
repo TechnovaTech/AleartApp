@@ -8,6 +8,7 @@ import 'screens/user_timeline_screen.dart';
 import 'screens/language_selection_screen.dart';
 import 'screens/consent_screen.dart';
 import 'screens/mandate_approval_screen.dart';
+import 'screens/upi_setup_screen.dart';
 import 'services/localization_service.dart';
 import 'services/api_service.dart';
 import 'services/voice_alert_service.dart';
@@ -80,6 +81,10 @@ class _MyAppState extends State<MyApp> {
         '/language-selection': (context) => const LanguageSelectionScreen(),
         '/consent': (context) => const ConsentScreen(),
         '/mandate-approval': (context) => const MandateApprovalScreen(),
+        '/upi-setup': (context) => UpiSetupScreen(
+          userId: ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?['userId'] ?? '',
+          planId: ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?['planId'] ?? '',
+        ),
       },
     );
   }

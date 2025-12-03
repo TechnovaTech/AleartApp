@@ -145,17 +145,19 @@ async function handlePaymentFailed(paymentData: any) {
   
   if (subscription) {
     subscription.subscriptionFailureReason = paymentData.error_description
+    subscription.status = 'expired' // Downgrade to free plan
     await subscription.save()
     
     // Add timeline event
     await UserTimeline.create({
       userId: subscription.userId,
       eventType: 'payment_failed',
-      title: 'Payment Failed',
-      description: `Payment failed: ${paymentData.error_description}`,
+      title: 'Payment Failed - Downgraded to Free Plan',
+      description: `Payment failed: ${paymentData.error_description}. Account downgraded to Free Plan (Limited).`,
       metadata: { 
         paymentId: paymentData.id,
-        errorCode: paymentData.error_code
+        errorCode: paymentData.error_code,
+        downgradedAt: new Date()
       }
     })
   }

@@ -70,7 +70,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
     final userData = await ApiService.getCachedUserData();
     if (userData != null) {
       final result = await ApiService.getQRCodes(userId: userData['id']);
-      if (result['qrCodes'] != null) {
+      if (result['qrCodes'] != null && mounted) {
         setState(() {
           _recentQRCodes = List<Map<String, dynamic>>.from(result['qrCodes']);
         });
@@ -80,7 +80,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
 
   Future<void> _saveQRCode(String upiId) async {
     final userData = await ApiService.getCachedUserData();
-    if (userData != null) {
+    if (userData != null && mounted) {
       await ApiService.saveQRCode(upiId: upiId, userId: userData['id']);
       _loadRecentQRCodes();
     }
@@ -131,10 +131,12 @@ class _MyQRScreenState extends State<MyQRScreen> {
                   child: GestureDetector(
                     onTap: () async {
                       _upiControllers[_currentPage].text = qr['upiId'];
-                      setState(() {
-                        _qrData[_currentPage] = qr['qrData'];
-                        _qrGenerated[_currentPage] = true;
-                      });
+                      if (mounted) {
+                        setState(() {
+                          _qrData[_currentPage] = qr['qrData'];
+                          _qrGenerated[_currentPage] = true;
+                        });
+                      }
                       await _saveQRState(qr['upiId'], qr['qrData']);
                     },
                     child: Container(
@@ -304,22 +306,28 @@ class _MyQRScreenState extends State<MyQRScreen> {
                     return;
                   }
                   
-                  setState(() {
-                    _isLoading = true;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                  }
                   
                   final qrData = _generateUPIQRData(upiId);
-                  setState(() {
-                    _qrData[_currentPage] = qrData;
-                    _qrGenerated[_currentPage] = true;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      _qrData[_currentPage] = qrData;
+                      _qrGenerated[_currentPage] = true;
+                    });
+                  }
                   
                   await _saveQRCode(upiId);
                   await _saveQRState(upiId, qrData);
                   
-                  setState(() {
-                    _isLoading = false;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
                   
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('QR Code Generated & Saved!')),
@@ -349,9 +357,11 @@ class _MyQRScreenState extends State<MyQRScreen> {
             // Instructions Dropdown
             GestureDetector(
               onTap: () {
-                setState(() {
-                  _showInstructions = !_showInstructions;
-                });
+                if (mounted) {
+                  setState(() {
+                    _showInstructions = !_showInstructions;
+                  });
+                }
               },
               child: Container(
                 padding: EdgeInsets.all(16),
