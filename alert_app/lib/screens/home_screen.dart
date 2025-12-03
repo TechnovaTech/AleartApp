@@ -6,6 +6,7 @@ import 'settings_screen.dart';
 import '../widgets/activate_alerts_bottom_sheet.dart';
 import '../widgets/custom_bottom_navbar.dart';
 import '../widgets/language_button.dart';
+import '../widgets/trial_banner_widget.dart';
 import '../services/localization_service.dart';
 import '../services/notification_service.dart';
 import '../services/api_service.dart';
@@ -37,6 +38,7 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   StreamSubscription? _paymentSubscription;
   Timer? _refreshTimer;
   bool _isDemoMode = false;
+  String? _currentUserId;
 
   @override
   void initState() {
@@ -50,6 +52,14 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
   }
   
   void _initializeNotifications() async {
+    // Get current user ID for trial banner
+    final userData = await ApiService.getCachedUserData();
+    if (userData != null) {
+      setState(() {
+        _currentUserId = userData['_id'];
+      });
+    }
+    
     await _loadTodaysPayments();
     
     // Start auto-refresh for demo mode
@@ -352,6 +362,9 @@ class _HomeScreenMainState extends State<HomeScreenMain> {
       ),
       body: Column(
         children: [
+          // Trial Banner
+          if (_currentUserId != null)
+            TrialBannerWidget(userId: _currentUserId!),
           Container(
             color: Colors.white,
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),

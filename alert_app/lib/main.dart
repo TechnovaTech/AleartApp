@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'screens/home.dart';
 import 'screens/home_screen.dart';
 import 'screens/login.dart';
+import 'screens/subscription_screen.dart';
+import 'screens/subscription_status_screen.dart';
+import 'screens/user_timeline_screen.dart';
+import 'screens/language_selection_screen.dart';
+import 'screens/consent_screen.dart';
+import 'screens/mandate_approval_screen.dart';
 import 'services/localization_service.dart';
 import 'services/api_service.dart';
 import 'widgets/language_wrapper.dart';
@@ -36,6 +42,14 @@ class _MyAppState extends State<MyApp> {
       ),
       home: LanguageWrapper(child: const AuthWrapper()),
       debugShowCheckedModeBanner: false,
+      routes: {
+        '/subscription': (context) => const SubscriptionScreen(),
+        '/subscription-status': (context) => const SubscriptionStatusScreen(),
+        '/user-timeline': (context) => const UserTimelineScreen(),
+        '/language-selection': (context) => const LanguageSelectionScreen(),
+        '/consent': (context) => const ConsentScreen(),
+        '/mandate-approval': (context) => const MandateApprovalScreen(),
+      },
     );
   }
 }

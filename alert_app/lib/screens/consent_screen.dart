@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../services/api_service.dart';
 
 class ConsentScreen extends StatefulWidget {
   const ConsentScreen({Key? key}) : super(key: key);

@@ -3,25 +3,33 @@ import mongoose from 'mongoose'
 const PlanSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
-  monthlyPrice: {
+  price: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
-  yearlyPrice: {
-    type: Number,
-    required: true
+  duration: {
+    type: String,
+    required: true,
+    enum: ['monthly', 'yearly'],
+    default: 'monthly'
   },
   features: [{
     type: String,
-    required: true
+    trim: true
   }],
   isActive: {
     type: Boolean,
     default: true
   },
   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }

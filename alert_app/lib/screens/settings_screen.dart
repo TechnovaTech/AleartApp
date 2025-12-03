@@ -55,6 +55,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSubscriptionItem(screenWidth),
             SizedBox(height: screenWidth * 0.02),
             _buildSection(LocalizationService.translate('voice_settings'), screenWidth),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/language-selection'),
+              child: _buildSettingItem(
+                Icons.language,
+                'Language Settings',
+                'Choose TTS voice language',
+                screenWidth,
+              ),
+            ),
+            SizedBox(height: screenWidth * 0.02),
             _buildSettingItem(
               Icons.music_note,
               LocalizationService.translate('notification_sound'),
@@ -70,11 +80,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             SizedBox(height: screenWidth * 0.02),
             _buildSection(LocalizationService.translate('general'), screenWidth),
-            _buildSettingItem(
-              Icons.notifications,
-              LocalizationService.translate('permissions'),
-              '',
-              screenWidth,
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/subscription-status'),
+              child: _buildSettingItem(
+                Icons.card_membership,
+                'Subscription Status',
+                'View subscription details',
+                screenWidth,
+              ),
+            ),
+            SizedBox(height: screenWidth * 0.02),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/user-timeline'),
+              child: _buildSettingItem(
+                Icons.timeline,
+                'Activity Timeline',
+                'View your activity history',
+                screenWidth,
+              ),
+            ),
+            SizedBox(height: screenWidth * 0.02),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/consent'),
+              child: _buildSettingItem(
+                Icons.notifications,
+                LocalizationService.translate('permissions'),
+                'Manage app permissions',
+                screenWidth,
+              ),
             ),
             SizedBox(height: screenWidth * 0.02),
             _buildSettingItem(
@@ -245,10 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSubscriptionItem(double screenWidth) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const PlansScreen()),
-        );
+        Navigator.pushNamed(context, '/subscription');
       },
       child: Container(
         margin: EdgeInsets.symmetric(

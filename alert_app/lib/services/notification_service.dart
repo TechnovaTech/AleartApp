@@ -137,6 +137,11 @@ class NotificationService {
       }
     }
     
+    // Generate unique transaction ID with better uniqueness
+    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    String randomSuffix = (timestamp.hashCode % 10000).abs().toString().padLeft(4, '0');
+    String transactionId = 'UPI_${amount}_${timestamp}_${randomSuffix}';
+    
     // Debug print to see what's being detected
     print('SMS Text: $text');
     print('Package: $packageName');
@@ -144,11 +149,6 @@ class NotificationService {
     print('Detected UPI ID: $upiId');
     print('Detected App: $paymentApp');
     print('Generated Transaction ID: $transactionId');
-    
-    // Generate unique transaction ID with better uniqueness
-    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    String randomSuffix = (timestamp.hashCode % 10000).abs().toString().padLeft(4, '0');
-    String transactionId = 'UPI_${amount}_${timestamp}_${randomSuffix}';
     
     return {
       'amount': amount,

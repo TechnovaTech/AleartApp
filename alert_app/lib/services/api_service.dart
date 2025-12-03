@@ -297,4 +297,25 @@ class ApiService {
     
     return await _handleRequest(request);
   }
+  
+  // Generic GET method for new screens
+  static Future<Map<String, dynamic>> get(String endpoint) async {
+    final request = http.get(
+      Uri.parse('$apiUrl$endpoint'),
+      headers: _headers,
+    );
+    
+    return await _handleRequest(request);
+  }
+  
+  // Generic POST method for new screens
+  static Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> data) async {
+    final request = http.post(
+      Uri.parse('$apiUrl$endpoint'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    
+    return await _handleRequest(request);
+  }
 }
