@@ -1,20 +1,21 @@
+'use client'
+
 import './globals.css'
 import DashboardLayout from '@/components/DashboardLayout'
-
-export const metadata = {
-  title: 'AlertPe Admin Panel',
-  description: 'Admin panel for AlertPe Soundbox',
-}
+import { usePathname } from 'next/navigation'
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+  const isLoginPage = pathname === '/'
+
   return (
     <html lang="en">
       <body>
-        <DashboardLayout>{children}</DashboardLayout>
+        {isLoginPage ? children : <DashboardLayout>{children}</DashboardLayout>}
       </body>
     </html>
   )
