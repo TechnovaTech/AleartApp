@@ -11,6 +11,25 @@ class ConsentScreen extends StatefulWidget {
 class _ConsentScreenState extends State<ConsentScreen> {
   bool isLoading = false;
 
+  Future<void> _acceptAndRequestPermissions() async {
+    // Add timeline event for consent granted
+    try {
+      final userData = await ApiService.getCachedUserData();
+      if (userData != null) {
+        await ApiService.post('/timeline/add', {
+          'userId': userData['_id'],
+          'eventType': 'notification-consent-granted',
+          'title': 'Notification Consent Granted',
+          'description': 'User granted permission to read notifications',
+        });
+      }
+    } catch (e) {
+      // Continue even if timeline fails
+    }
+    
+    await _requestPermissions();
+  }
+
   Future<void> _requestPermissions() async {
     setState(() {
       isLoading = true;
@@ -135,29 +154,43 @@ class _ConsentScreenState extends State<ConsentScreen> {
               
               const SizedBox(height: 32),
               
-              // Privacy note
+              // Legal disclaimer
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.green.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.lock,
-                      color: Colors.green,
-                      size: 20,
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Your data is processed locally and never shared with third parties.',
-                        style: TextStyle(
-                          fontSize: 14,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lock,
                           color: Colors.green,
-                          fontWeight: FontWeight.w500,
+                          size: 20,
                         ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Privacy & Data Protection',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'We read UPI transaction notifications ONLY on your device. No notification content is uploaded or stored on servers. By continuing, you agree to the app permissions.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.green,
+                        height: 1.4,
                       ),
                     ),
                   ],
@@ -166,29 +199,56 @@ class _ConsentScreenState extends State<ConsentScreen> {
               
               const Spacer(),
               
-              // Continue button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : _requestPermissions,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              // Accept/Decline buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: isLoading ? null : () {
+                        Navigator.of(context).pop();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.grey[600],
+                        side: BorderSide(color: Colors.grey[400]!),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Decline',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Grant Permissions',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _acceptAndRequestPermissions,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                ),
+                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Accept & Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
               ),
               
               const SizedBox(height: 16),

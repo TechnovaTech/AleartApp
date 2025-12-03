@@ -48,6 +48,31 @@ export async function POST(request: NextRequest) {
         webhookLog.processed = true
         await webhookLog.save()
       }
+    } else if (event === 'subscription.payment_failed') {
+      const subscriptionId = payload.subscription?.id
+      const subscription = await Subscription.findOne({ razorpaySubscriptionId: subscriptionId })
+      
+      if (subscription) {
+        // Downgrade subscription
+        subscription.status = 'expired'
+        subscription.subscriptionFailureReason = payload.error?.description || 'Payment failed'
+        subscription.updatedAt = new Date()
+        await subscription.save()
+        
+        // Add timeline event
+        const timeline = new UserTimeline({
+          userId: subscription.userId,
+          eventType: 'subscription-renewal-failed',
+          title: 'Subscription Renewal Failed',
+          description: `Payment failed: ${payload.error?.description || 'Unknown error'}`,
+          metadata: { failureReason: payload.error?.description }
+        })
+        await timeline.save()
+        
+        webhookLog.userId = subscription.userId
+        webhookLog.processed = true
+        await webhookLog.save()
+      }
     }
     
     return NextResponse.json({ success: true })

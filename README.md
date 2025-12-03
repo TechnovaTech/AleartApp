@@ -91,7 +91,7 @@ Subscription Collection:
 - userId, planId, status (trial/active/expired/cancelled)
 - trialStartDate, trialEndDate, subscriptionStartDate
 - nextRenewalDate, mandateId, razorpaySubscriptionId
-- amount, createdAt, updatedAt
+- amount, subscriptionFailureReason, createdAt, updatedAt
 
 Mandate Collection:
 - userId, mandateId, status (pending/approved/rejected/cancelled)
@@ -105,6 +105,14 @@ UserTimeline Collection:
 RazorpayMockWebhookLog Collection:
 - eventType, payload, subscriptionId, mandateId
 - userId, processed, createdAt
+
+SubscriptionReminder Collection:
+- userId, subscriptionId, reminderType (24h/1h)
+- renewalDate, sent, sentAt, createdAt
+
+UpiAppConfig Collection:
+- name, packageName, icon, priority
+- isActive, createdAt, updatedAt
 ```
 
 ### API Endpoints
@@ -154,6 +162,21 @@ User Timeline:
 
 Scheduler:
 - POST /api/scheduler/run
+
+Subscription Failure Handling:
+- POST /api/subscription/downgrade
+- GET /api/subscription/reminders
+
+Mandate Management:
+- GET /api/mandates/all
+
+UPI App Configuration:
+- GET /api/upi-apps
+- POST /api/upi-apps
+
+User Settings:
+- GET /api/user/settings
+- POST /api/user/settings
 ```
 
 ## 🔧 Installation & Setup
@@ -322,6 +345,7 @@ npm run seed-admin   # Seed admin user
 - `/trial-settings` - Configure free trial settings
 - `/webhook-logs` - View mock Razorpay webhook logs
 - `/user-timeline` - View user activity timelines
+- `/mandates` - Manage autopay mandates
 
 ### Mobile App Development
 ```bash
@@ -333,12 +357,16 @@ flutter build web             # Build web version
 ```
 
 ### NEW Flutter Screens
-- `ConsentScreen` - Permission request for SMS/notifications
+- `ConsentScreen` - Permission request for SMS/notifications (with legal text)
 - `SubscriptionScreen` - Subscription plans and activation
 - `MandateApprovalScreen` - Mock autopay mandate approval
 - `SubscriptionStatusScreen` - View subscription details
 - `UserTimelineScreen` - User activity timeline
 - `TrialBannerWidget` - Free trial countdown banner
+- `SubscriptionFailureScreen` - Handle subscription renewal failures
+- `LanguageSelectionScreen` - TTS language settings
+- `TrialExpiredDialog` - Trial expiry enforcement
+- `RenewalReminderNotification` - Subscription renewal reminders
 
 ## 📈 Monitoring & Maintenance
 
