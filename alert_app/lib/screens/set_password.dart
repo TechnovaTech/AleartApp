@@ -81,7 +81,15 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       // Navigate to Get Started screen for first-time users
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const GetStartedScreen()),
+        MaterialPageRoute(
+          builder: (context) => const GetStartedScreen(),
+          settings: RouteSettings(
+            arguments: {
+              'userId': result['user']?['id'] ?? result['user']?['_id'] ?? '',
+              'isNewUser': true,
+            },
+          ),
+        ),
         (route) => false,
       );
     } else {

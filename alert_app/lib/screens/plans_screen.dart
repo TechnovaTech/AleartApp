@@ -50,8 +50,8 @@ class _PlansScreenState extends State<PlansScreen> {
         Plan(
           id: 'free',
           name: 'Free Plan',
-          monthlyPrice: 0,
-          yearlyPrice: 0,
+          price: 0,
+          duration: 'monthly',
           features: [
             'Basic UPI payment alerts',
             'Up to 2 QR codes',
@@ -63,8 +63,8 @@ class _PlansScreenState extends State<PlansScreen> {
         Plan(
           id: 'premium',
           name: 'Premium Plan',
-          monthlyPrice: 99,
-          yearlyPrice: 999,
+          price: 99,
+          duration: 'monthly',
           features: [
             'Advanced UPI payment alerts',
             'Unlimited QR codes',
@@ -186,14 +186,14 @@ class _PlansScreenState extends State<PlansScreen> {
               children: [
                 _PlanCard(
                   title: plan.name,
-                  price: '₹${plan.monthlyPrice.toInt()}',
+                  price: '₹${plan.price.toInt()}',
                   period: '/month',
                   features: plan.features,
                   isCurrentPlan: currentPlan == plan.id,
-                  isPremium: plan.monthlyPrice > 0,
+                  isPremium: plan.price > 0,
                   onTap: () {
                     if (currentPlan != plan.id) {
-                      if (plan.monthlyPrice > 0) {
+                      if (plan.price > 0) {
                         _showUpgradeDialog(plan);
                       } else {
                         _showDowngradeDialog();
@@ -413,7 +413,7 @@ class _PlansScreenState extends State<PlansScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Upgrade to ${plan.name}'),
-        content: Text('Unlock all premium features for just ₹${plan.monthlyPrice.toInt()}/month. Continue?'),
+        content: Text('Unlock all premium features for just ₹${plan.price.toInt()}/${plan.duration}. Continue?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

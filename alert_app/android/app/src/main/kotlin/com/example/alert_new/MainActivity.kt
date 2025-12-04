@@ -264,12 +264,22 @@ class MainActivity: FlutterActivity() {
                 }
             }
             
-            // If specific app failed or not provided, try generic UPI intent
+            // If specific app failed or not provided, show system app chooser
             val genericIntent = Intent(Intent.ACTION_VIEW, Uri.parse(upiUrl))
             genericIntent.addCategory(Intent.CATEGORY_BROWSABLE)
             
-            if (genericIntent.resolveActivity(packageManager) != null) {
-                startActivity(genericIntent)
+            // Get list of apps that can handle UPI
+            val resolveInfos = packageManager.queryIntentActivities(genericIntent, 0)
+            
+            if (resolveInfos.isNotEmpty()) {
+                // If multiple apps available, show chooser
+                if (resolveInfos.size > 1) {
+                    val chooser = Intent.createChooser(genericIntent, "Choose UPI App")
+                    startActivity(chooser)
+                } else {
+                    // If only one app, open directly
+                    startActivity(genericIntent)
+                }
                 true
             } else {
                 false

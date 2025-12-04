@@ -170,7 +170,8 @@ class RazorpayService {
       return result ?? false;
     } catch (e) {
       print('Failed to launch UPI intent: $e');
-      return false;
+      // Fallback to browser if UPI intent fails
+      return await _launchPaymentUrl(upiUrl);
     }
   }
 }

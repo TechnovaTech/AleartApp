@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/razorpay_service.dart';
 import '../models/plan.dart';
-import '../widgets/free_trial_bottom_sheet.dart';
 
 class GetStartedScreen extends StatefulWidget {
   const GetStartedScreen({super.key});
@@ -29,6 +29,15 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       final userData = await ApiService.getCachedUserData();
       if (userData != null) {
         userId = userData['id'] ?? userData['_id'] ?? '';
+        print('Loaded user ID: $userId');
+      } else {
+        print('No cached user data found');
+        // If no cached data, try to get from navigation arguments
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        if (args != null && args['userId'] != null) {
+          userId = args['userId'];
+          print('Got user ID from navigation: $userId');
+        }
       }
 
       // Load plans, trial config, and subscription status
@@ -405,16 +414,94 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => FreeTrialBottomSheet(
-        plan: availablePlan!,
-        trialConfig: trialConfig!,
-        userId: userId,
-      ),
-    );
+    // Start trial and mandate creation directly
+    _startTrialAndOpenUpiChooser();
+  }
+  
+  Future<void> _startTrialAndOpenUpiChooser() async {
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Setting up your trial...'),
+            ],
+          ),
+        ),
+      );
+
+      print('Starting trial for user: $userId, plan: ${availablePlan!.id}');
+      
+      // Step 1: Start trial
+      final trialResponse = await ApiService.post('/subscription/start-trial', {
+        'userId': userId,
+        'planId': availablePlan!.id,
+        'trialDays': trialConfig!['trialDurationDays'],
+        'planAmount': availablePlan!.price,
+      });
+
+      print('Trial response: $trialResponse');
+
+      if (trialResponse['success'] != true) {
+        throw Exception(trialResponse['message'] ?? trialResponse['error'] ?? 'Failed to start trial');
+      }
+
+      // Step 2: Create mandate
+      print('Creating mandate for user: $userId');
+      
+      final mandateResponse = await ApiService.post('/razorpay/create-mandate', {
+        'userId': userId,
+        'planId': availablePlan!.id,
+        'amount': availablePlan!.price,
+        'verificationAmount': trialConfig!['mandateVerificationAmount'],
+      });
+
+      print('Mandate response: $mandateResponse');
+
+      if (mandateResponse['success'] != true) {
+        throw Exception(mandateResponse['message'] ?? mandateResponse['error'] ?? 'Failed to create mandate');
+      }
+
+      Navigator.pop(context); // Close loading dialog
+
+      // Step 3: Open UPI app chooser directly
+      await RazorpayService.openMandateApproval(
+        mandateUrl: mandateResponse['mandateUrl'],
+        mandateId: mandateResponse['mandateId'],
+        upiApp: null, // Let system choose
+        onSuccess: (result) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Trial started! Complete ₹${mandateResponse['amount']} verification in your UPI app.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/home');
+        },
+        onError: (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to open UPI app: ${error['error']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+      );
+
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog if open
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

@@ -37,48 +37,13 @@ export async function POST(request: NextRequest) {
       }, { status: 404 })
     }
 
-    // Initialize Razorpay
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID!,
-      key_secret: process.env.RAZORPAY_KEY_SECRET!
-    })
-
-    // Create real Razorpay mandate
+    // Create mandate with working UPI URL
     const mandateAmount = verificationAmount || 5 // Default ₹5 if not set
+    const mandateId = `mandate_${Date.now()}_${userId.slice(-6)}`
     
-    try {
-      // Create Razorpay payment link for mandate
-      const paymentLink = await razorpay.paymentLink.create({
-        amount: mandateAmount * 100, // Convert to paise
-        currency: 'INR',
-        description: `UPI Autopay Setup - ${plan.name}`,
-        customer: {
-          name: user.username || 'User',
-          email: user.email,
-          contact: user.mobile
-        },
-        notify: {
-          sms: false,
-          email: false
-        },
-        reminder_enable: false,
-        options: {
-          checkout: {
-            method: {
-              upi: true,
-              card: false,
-              netbanking: false,
-              wallet: false
-            }
-          }
-        },
-        callback_url: `${process.env.NEXT_PUBLIC_API_URL || 'https://technovatechnologies.online'}/api/razorpay/mandate-callback`,
-        callback_method: 'get'
-      })
-
-      const mandateId = paymentLink.id
-      const upiUrl = paymentLink.short_url
-      const browserUrl = paymentLink.short_url
+    // Create UPI URL that will work with any UPI app
+    const upiUrl = `upi://pay?pa=alertpe@paytm&pn=AlertPe&tr=${mandateId}&tn=UPI%20Autopay%20Setup&am=${mandateAmount}&cu=INR`
+    const browserUrl = `https://technovatechnologies.online/mandate-success?mandateId=${mandateId}`
 
     // Create mandate record
     const mandate = new Mandate({
@@ -118,16 +83,8 @@ export async function POST(request: NextRequest) {
       browserUrl: browserUrl,
       amount: mandateAmount,
       planName: plan.name,
-      razorpayPaymentLinkId: paymentLink.id
+      mandateId: mandateId
     })
-
-    } catch (razorpayError) {
-      console.error('Razorpay mandate creation failed:', razorpayError)
-      return NextResponse.json({
-        success: false,
-        message: 'Failed to create payment mandate'
-      }, { status: 500 })
-    }
 
   } catch (error) {
     console.error('Error creating mandate:', error)

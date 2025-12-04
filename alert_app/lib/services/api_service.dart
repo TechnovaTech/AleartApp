@@ -99,8 +99,11 @@ class ApiService {
     
     final result = await _handleRequest(request);
     
+    print('Registration result: $result');
+    
     // Cache user data on successful registration
     if (result['success'] == true && result['user'] != null) {
+      print('Caching user data: ${result['user']}');
       await _cacheUserData(result['user']);
     }
     
@@ -132,7 +135,9 @@ class ApiService {
   
   static Future<void> _cacheUserData(Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_id', user['id'] ?? '');
+    final userId = user['id'] ?? user['_id'] ?? '';
+    print('Caching user ID: $userId');
+    await prefs.setString('user_id', userId);
     await prefs.setString('user_email', user['email'] ?? '');
     await prefs.setString('user_mobile', user['mobile'] ?? '');
     await prefs.setString('user_username', user['username'] ?? '');
