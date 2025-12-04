@@ -191,66 +191,181 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
   }
 
   void _showAutopaySetupDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 28),
-            const SizedBox(width: 12),
-            const Text('Setup Autopay'),
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Row(
+                      children: [
+                        Icon(Icons.payment, color: Colors.blue, size: 28),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Setup UPI Mandate',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Plan Details
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Plan Details:',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Amount: ₹${widget.planAmount?.toInt() ?? 99}'),
+                          Text('Trial: ${widget.trialDays ?? 1} day${(widget.trialDays ?? 1) > 1 ? 's' : ''} FREE'),
+                          if (widget.verificationAmount != null)
+                            Text('Verification: ₹${widget.verificationAmount!.toInt()} (refunded)'),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // UPI Apps List
+                    const Text(
+                      'Select UPI App:',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    ...installedApps.map((app) {
+                      final isSelected = selectedApp == app;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey.shade300,
+                            width: isSelected ? 2 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          color: isSelected ? Colors.blue.shade50 : Colors.white,
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.account_balance_wallet,
+                            color: isSelected ? Colors.blue : Colors.grey,
+                          ),
+                          title: Text(
+                            app['name']!,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? Colors.blue : Colors.black,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Tap to select',
+                            style: TextStyle(
+                              color: isSelected ? Colors.blue.shade600 : Colors.grey,
+                            ),
+                          ),
+                          trailing: isSelected 
+                              ? Icon(Icons.check_circle, color: Colors.blue)
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              selectedApp = app;
+                            });
+                          },
+                        ),
+                      );
+                    }),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Setup Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _setupRazorpayMandate();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Setup Mandate with ${selectedApp?['name'] ?? 'UPI App'}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Skip Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(context, '/home');
+                        },
+                        child: const Text('Skip for Now'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Your ${widget.trialDays ?? 1} day free trial is starting!',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text('Selected UPI App: ${selectedApp?['name'] ?? 'Default'}'),
-            const SizedBox(height: 8),
-            Text('Plan: ₹${widget.planAmount?.toInt() ?? 99}/month'),
-            const SizedBox(height: 12),
-            const Text(
-              'Next steps:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const Text('1. Your UPI app will open'),
-            const Text('2. Approve the autopay mandate (₹0 for trial)'),
-            const Text('3. Enjoy your free trial!'),
-            const Text('4. Autopay starts after trial ends'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/home');
-            },
-            child: const Text('Skip for Now'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              // Simulate opening UPI app for autopay setup
-              await _simulateUpiAutopaySetup();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Open ${selectedApp?['name'] ?? 'UPI App'}'),
-          ),
-        ],
       ),
     );
   }
 
-  Future<void> _simulateUpiAutopaySetup() async {
+  Future<void> _setupRazorpayMandate() async {
     // Show loading
     showDialog(
       context: context,
@@ -261,18 +376,50 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Opening UPI app...'),
+            Text('Setting up Razorpay mandate...'),
           ],
         ),
       ),
     );
 
-    // Simulate delay
-    await Future.delayed(const Duration(seconds: 2));
-    
-    Navigator.pop(context); // Close loading dialog
-    
-    // Show success message
+    try {
+      // Create Razorpay mandate
+      final mandateResponse = await RazorpayService.createMandate(
+        userId: widget.userId,
+        planId: widget.planId,
+        amount: widget.planAmount ?? 99,
+        verificationAmount: widget.verificationAmount,
+        upiApp: selectedApp?['packageName'],
+      );
+
+      Navigator.pop(context); // Close loading dialog
+
+      if (mandateResponse['success'] == true) {
+        final mandateUrl = mandateResponse['mandateUrl'];
+        final mandateId = mandateResponse['mandateId'];
+        
+        // Open UPI app or browser for mandate approval
+        await RazorpayService.openMandateApproval(
+          mandateUrl: mandateUrl,
+          mandateId: mandateId,
+          upiApp: selectedApp?['packageName'],
+          onSuccess: (result) {
+            _showMandateSuccess();
+          },
+          onError: (error) {
+            _showMandateError(error['error'] ?? 'Mandate setup failed');
+          },
+        );
+      } else {
+        _showMandateError(mandateResponse['error'] ?? 'Failed to create mandate');
+      }
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog
+      _showMandateError('Network error: $e');
+    }
+  }
+
+  void _showMandateSuccess() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -280,7 +427,7 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
           children: [
             Icon(Icons.celebration, color: Colors.green, size: 28),
             const SizedBox(width: 12),
-            const Text('Trial Started!'),
+            const Text('Mandate Setup Complete!'),
           ],
         ),
         content: Column(
@@ -291,10 +438,10 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
-            const Text('Autopay mandate has been set up successfully.'),
+            const Text('UPI mandate has been set up successfully.'),
             const SizedBox(height: 8),
             Text(
-              'Billing starts: After ${widget.trialDays ?? 1} day(s)',
+              'Autopay will start after trial ends for ₹${widget.planAmount?.toInt() ?? 99}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -310,6 +457,29 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
               foregroundColor: Colors.white,
             ),
             child: const Text('Start Using App'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMandateError(String error) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mandate Setup Failed'),
+        content: Text(error),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _setupRazorpayMandate();
+            },
+            child: const Text('Retry'),
           ),
         ],
       ),

@@ -114,4 +114,61 @@ class RazorpayService {
       return {'success': false, 'error': e.toString()};
     }
   }
+  
+  static Future<Map<String, dynamic>> createMandate({
+    required String userId,
+    required String planId,
+    required double amount,
+    double? verificationAmount,
+    String? upiApp,
+  }) async {
+    try {
+      final response = await ApiService.post('/razorpay/create-mandate', {
+        'userId': userId,
+        'planId': planId,
+        'amount': amount,
+        'verificationAmount': verificationAmount,
+        'upiApp': upiApp,
+      });
+      
+      return response;
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+  
+  static Future<void> openMandateApproval({
+    required String mandateUrl,
+    required String mandateId,
+    String? upiApp,
+    required Function(Map<String, dynamic>) onSuccess,
+    required Function(Map<String, dynamic>) onError,
+  }) async {
+    try {
+      bool success = false;
+      
+      // Try to open in specific UPI app first
+      if (upiApp != null && mandateUrl.startsWith('upi://')) {
+        success = await _launchUpiIntent(mandateUrl, upiApp);
+      }
+      
+      // If UPI app failed, try generic UPI
+      if (!success && mandateUrl.startsWith('upi://')) {
+        success = await _launchUpiIntent(mandateUrl, null);
+      }
+      
+      // If UPI failed, open in browser
+      if (!success) {
+        success = await _launchPaymentUrl(mandateUrl);
+      }
+      
+      if (success) {
+        onSuccess({'status': 'success', 'mandateId': mandateId});
+      } else {
+        onError({'error': 'Failed to open mandate approval'});
+      }
+    } catch (e) {
+      onError({'error': e.toString()});
+    }
+  }
 }

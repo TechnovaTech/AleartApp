@@ -20,24 +20,17 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
   @override
   void initState() {
     super.initState();
-    print('GetStartedScreen: initState called');
-    // Set fallback data immediately
-    _setFallbackData();
-    print('GetStartedScreen: Fallback data set - plans: ${plans.length}, selectedPlan: ${selectedPlan?.name}');
-    setState(() {
-      isLoading = false;
-    });
-    // Load real data in background
     _loadData();
   }
 
   Future<void> _loadData() async {
+    setState(() {
+      isLoading = true;
+    });
+    
     try {
-      print('GetStartedScreen: Loading data from production API...');
-      
       // Load plans from production API
       final plansResponse = await ApiService.get('/plans');
-      print('GetStartedScreen: Plans API response: $plansResponse');
       
       if (plansResponse['success'] == true && plansResponse['plans'] != null) {
         final plansList = (plansResponse['plans'] as List)
@@ -45,32 +38,36 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
             .where((plan) => plan.isActive && plan.price > 0)
             .toList();
         
-        if (plansList.isNotEmpty) {
-          setState(() {
-            plans = plansList;
-            selectedPlan = plansList.first;
-          });
-          print('GetStartedScreen: Loaded ${plansList.length} plans from API');
-        }
+        setState(() {
+          plans = plansList;
+          selectedPlan = plansList.isNotEmpty ? plansList.first : null;
+        });
       }
 
       // Load trial configuration
       final trialResponse = await ApiService.get('/config/trial');
-      print('GetStartedScreen: Trial config response: $trialResponse');
       
       if (trialResponse['success'] == true && trialResponse['config'] != null) {
         setState(() {
           trialConfig = trialResponse['config'];
         });
-        print('GetStartedScreen: Trial config loaded: ${trialConfig?['trialDurationDays']} days');
       }
+      
+      // If no data loaded, use fallback
+      if (plans.isEmpty) {
+        _setFallbackData();
+      }
+      
     } catch (e) {
-      print('GetStartedScreen: API Error: $e');
+      _setFallbackData();
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   void _setFallbackData() {
-    print('GetStartedScreen: Setting fallback data');
     setState(() {
       plans = [
         Plan(
@@ -95,13 +92,10 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         'trialFeatures': ['Basic alerts', 'Limited reports']
       };
     });
-    print('GetStartedScreen: Fallback data set - selectedPlan: ${selectedPlan?.name}, price: ${selectedPlan?.monthlyPrice}');
   }
 
   Future<void> _startFreeTrial() async {
     if (selectedPlan == null) return;
-
-    // Show trial information popup first
     _showTrialInformationPopup();
   }
 
@@ -153,188 +147,166 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-        title: Row(
-          children: [
-            Icon(Icons.timer, color: Colors.green.shade600, size: 28),
-            const SizedBox(width: 12),
-            Text('${trialConfig?['trialDurationDays'] ?? 1} Day Free Trial'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Plan Information
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      selectedPlan!.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+
+                    // Plan Information
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '₹${selectedPlan!.monthlyPrice.toInt()}/month',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Features included:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    ...selectedPlan!.features.take(3).map((feature) => 
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                          children: [
-                            Icon(Icons.check, color: Colors.green, size: 16),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                feature,
-                                style: const TextStyle(fontSize: 13),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selectedPlan!.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '₹${selectedPlan!.price.toInt()}/${selectedPlan!.duration}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Features included:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          ...selectedPlan!.features.take(3).map((feature) => 
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.check, color: Colors.green, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      feature,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Trial Information
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Trial Details:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Trial Information
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green.shade200),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('• ${trialConfig?['trialDurationDays'] ?? 1} day${(trialConfig?['trialDurationDays'] ?? 1) > 1 ? 's' : ''} completely FREE'),
-                    const Text('• Full access to premium features'),
-                    const Text('• No charges during trial period'),
-                    Text('• Autopay starts after trial (₹${selectedPlan!.monthlyPrice.toInt()}/month)'),
-                    const Text('• Cancel anytime during trial'),
-                    if (trialConfig?['trialFeatures'] != null) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Trial Features:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      ...((trialConfig!['trialFeatures'] as List).map((feature) => 
-                        Text('• $feature', style: const TextStyle(fontSize: 13)),
-                      )),
-                    ],
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Mandate Verification Information
-              if (trialConfig?['isMandateVerificationEnabled'] == true) ..[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.purple.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.verified_user, color: Colors.purple.shade600),
-                          const SizedBox(width: 8),
                           const Text(
-                            'Account Verification',
+                            'Trial Details:',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          Text('• ${trialConfig?['trialDurationDays'] ?? 1} day${(trialConfig?['trialDurationDays'] ?? 1) > 1 ? 's' : ''} completely FREE'),
+                          const Text('• Full access to premium features'),
+                          const Text('• No charges during trial period'),
+                          Text('• Autopay starts after trial (₹${selectedPlan!.price.toInt()}/${selectedPlan!.duration})'),
+                          const Text('• Cancel anytime during trial'),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text('• Pay ₹${trialConfig?['mandateVerificationAmount'] ?? 5} to verify account'),
-                      const Text('• Amount will be immediately refunded'),
-                      const Text('• Confirms your payment method'),
-                      const Text('• Required for autopay setup'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              
-              // Autopay Information
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.security, color: Colors.orange.shade600),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Autopay Setup Process',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
                     ),
-                    const SizedBox(height: 8),
-                    if (trialConfig?['isMandateVerificationEnabled'] == true)
-                      Text('1. Verify account with ₹${trialConfig?['mandateVerificationAmount'] ?? 5} (refunded)')
-                    else
-                      const Text('1. Direct autopay setup'),
-                    const Text('2. Setup UPI mandate'),
-                    const Text('3. Trial starts immediately'),
-                    Text('4. Autopay for ₹${selectedPlan!.monthlyPrice.toInt()}/month after trial'),
-                    const Text('5. Cancel anytime during trial'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Mandate Verification Information
+                    if (trialConfig?['isMandateVerificationEnabled'] == true) ...[
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.purple.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.verified_user, color: Colors.purple.shade600),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Account Verification',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('• Pay ₹${trialConfig?['mandateVerificationAmount'] ?? 5} to verify account'),
+                            const Text('• Amount will be immediately refunded'),
+                            const Text('• Confirms your payment method'),
+                            const Text('• Required for autopay setup'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    // Autopay Information
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.security, color: Colors.orange.shade600),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Autopay Setup Process',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (trialConfig?['isMandateVerificationEnabled'] == true)
+                            Text('1. Verify account with ₹${trialConfig?['mandateVerificationAmount'] ?? 5} (refunded)')
+                          else
+                            const Text('1. Direct autopay setup'),
+                          const Text('2. Setup UPI mandate'),
+                          const Text('3. Trial starts immediately'),
+                          Text('4. Autopay for ₹${selectedPlan!.price.toInt()}/${selectedPlan!.duration} after trial'),
+                          const Text('5. Cancel anytime during trial'),
+                        ],
+                      ),
+                    ),
+                    
                     const SizedBox(height: 20),
                     
                     // Action buttons
@@ -394,7 +366,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         'planId': selectedPlan!.id,
         'userId': userData['id'] ?? userData['_id'],
         'trialDays': trialConfig?['trialDurationDays'] ?? 1,
-        'planAmount': selectedPlan!.monthlyPrice,
+        'planAmount': selectedPlan!.price,
       });
 
       if (response['success'] == true) {
@@ -405,7 +377,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
           arguments: {
             'userId': userData['id'] ?? userData['_id'],
             'planId': selectedPlan!.id,
-            'planAmount': selectedPlan!.monthlyPrice,
+            'planAmount': selectedPlan!.price,
             'isTrialMode': true,
             'trialDays': trialConfig?['trialDurationDays'] ?? 1,
             'verificationAmount': trialConfig?['isMandateVerificationEnabled'] == true 
@@ -481,326 +453,324 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   ),
                 )
               : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Header
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade600, Colors.purple.shade600],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.rocket_launch,
-                          color: Colors.white,
-                          size: 64,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Welcome to AlertPe',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Header
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.blue.shade600, Colors.purple.shade600],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Smart UPI Payment Monitoring',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Free Trial Banner
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.green.shade200),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: const Column(
                           children: [
-                            Icon(Icons.timer, color: Colors.green.shade600),
-                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.rocket_launch,
+                              color: Colors.white,
+                              size: 64,
+                            ),
+                            SizedBox(height: 16),
                             Text(
-                              '${trialConfig?['trialDurationDays'] ?? 1} Day FREE Trial',
-                              style: const TextStyle(
-                                color: Color(0xFF2E7D32),
-                                fontSize: 18,
+                              'Welcome to AlertPe',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Smart UPI Payment Monitoring',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Try all premium features for free!',
-                          style: TextStyle(
-                            color: Colors.green.shade600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Selected Plan Card
-                  if (selectedPlan != null) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.blue.shade200, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.1),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    selectedPlan!.name,
-                                    style: const TextStyle(
-                                      fontSize: 22,
+
+                      const SizedBox(height: 32),
+
+                      // Free Trial Banner
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.timer, color: Colors.green.shade600),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${trialConfig?['trialDurationDays'] ?? 1} Day FREE Trial',
+                                  style: const TextStyle(
+                                    color: Color(0xFF2E7D32),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Try all premium features for free!',
+                              style: TextStyle(
+                                color: Colors.green.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Selected Plan Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.blue.shade200, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.1),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      selectedPlan!.name,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          '₹${selectedPlan!.price.toInt()}',
+                                          style: const TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue,
+                                          ),
+                                        ),
+                                        Text(
+                                          '/${selectedPlan!.duration}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade100,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    'Recommended',
+                                    style: TextStyle(
+                                      color: Colors.blue,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Features
+                            ...selectedPlan!.features.map((feature) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        '₹${selectedPlan!.price.toInt()}',
-                                        style: const TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue,
-                                        ),
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green.shade600,
+                                        size: 20,
                                       ),
-                                      const Text(
-                                        '/${selectedPlan!.duration}',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.grey,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          feature,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black87,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade100,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  'Recommended',
+                                )),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Autopay Info
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.security, color: Colors.blue.shade600),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Secure Autopay Setup',
                                   style: TextStyle(
-                                    color: Colors.blue,
-                                    fontSize: 12,
+                                    color: Colors.blue.shade700,
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                   ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '• Free trial starts immediately\n• Autopay activates after trial ends\n• Cancel anytime during trial\n• Secure UPI mandate setup',
+                              style: TextStyle(
+                                color: Colors.blue.shade600,
+                                fontSize: 14,
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Start Free Trial Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isStartingTrial ? null : _startFreeTrial,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade600,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 3,
                           ),
-
-                          const SizedBox(height: 20),
-
-                          // Features
-                          ...selectedPlan!.features.map((feature) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Row(
+                          child: isStartingTrial
+                              ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green.shade600,
-                                      size: 20,
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        feature,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black87,
-                                        ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Starting Trial...',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
+                                )
+                              : Text(
+                                  'Start ${trialConfig?['trialDurationDays'] ?? 1} Day Trial',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              )),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Autopay Info
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.security, color: Colors.blue.shade600),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Secure Autopay Setup',
-                                style: TextStyle(
-                                  color: Colors.blue.shade700,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '• Free trial starts immediately\n• Autopay activates after trial ends\n• Cancel anytime during trial\n• Secure UPI mandate setup',
-                            style: TextStyle(
-                              color: Colors.blue.shade600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Start Free Trial Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isStartingTrial ? null : _startFreeTrial,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 3,
                         ),
-                        child: isStartingTrial
-                            ? const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Starting Trial...',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Text(
-                                'Start ${trialConfig?['trialDurationDays'] ?? 1} Day Trial',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Terms
-                    Text(
-                      'By continuing, you agree to setup autopay for ₹${selectedPlan!.monthlyPrice.toInt()}/month after your free trial ends. Cancel anytime.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 12,
+                      // Terms
+                      Text(
+                        'By continuing, you agree to setup autopay for ₹${selectedPlan!.price.toInt()}/${selectedPlan!.duration} after your free trial ends. Cancel anytime.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
 
-                  const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                  // Alternative Options
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
-                        child: const Text('Already have account?'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/plans'),
-                        child: const Text('View all plans'),
+                      // Alternative Options
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(context, '/login'),
+                            child: const Text('Already have account?'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(context, '/plans'),
+                            child: const Text('View all plans'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 }
