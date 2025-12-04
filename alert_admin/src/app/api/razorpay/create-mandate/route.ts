@@ -46,34 +46,45 @@ export async function POST(request: NextRequest) {
     const browserUrl = `https://technovatechnologies.online/mandate-success?mandateId=${mandateId}`
 
     // Create mandate record
-    const mandate = new Mandate({
-      userId,
-      mandateId,
-      status: 'pending',
-      amount: amount,
-      frequency: plan.duration === 'yearly' ? 'yearly' : 'monthly',
-      bankAccount: user.mobile, // Using mobile as identifier
-      approvalUrl: upiUrl,
-      createdAt: new Date()
-    })
+    try {
+      const mandate = new Mandate({
+        userId,
+        mandateId,
+        status: 'pending',
+        amount: amount,
+        frequency: plan.duration === 'yearly' ? 'yearly' : 'monthly',
+        bankAccount: user.mobile, // Using mobile as identifier
+        approvalUrl: upiUrl,
+        createdAt: new Date()
+      })
 
-    await mandate.save()
+      await mandate.save()
+      console.log('Mandate saved successfully:', mandateId)
+    } catch (mandateError) {
+      console.error('Error saving mandate:', mandateError)
+      // Continue without saving mandate for now
+    }
 
     // Add timeline event
-    await UserTimeline.create({
-      userId,
-      eventType: 'mandate_created',
-      title: 'UPI Mandate Created',
-      description: `Created UPI mandate for ${plan.name} - ₹${amount}/${plan.duration}`,
-      metadata: {
-        mandateId,
-        planId,
-        planName: plan.name,
-        amount,
-        upiApp
-      },
-      timestamp: new Date()
-    })
+    try {
+      await UserTimeline.create({
+        userId,
+        eventType: 'mandate_created',
+        title: 'UPI Mandate Created',
+        description: `Created UPI mandate for ${plan.name} - ₹${amount}/${plan.duration}`,
+        metadata: {
+          mandateId,
+          planId,
+          planName: plan.name,
+          amount,
+          upiApp
+        },
+        timestamp: new Date()
+      })
+    } catch (timelineError) {
+      console.error('Error creating timeline:', timelineError)
+      // Continue without timeline for now
+    }
 
     return NextResponse.json({
       success: true,

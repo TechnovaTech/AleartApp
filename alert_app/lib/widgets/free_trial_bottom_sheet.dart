@@ -162,7 +162,7 @@ class _FreeTrialBottomSheetState extends State<FreeTrialBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -182,7 +182,7 @@ class _FreeTrialBottomSheetState extends State<FreeTrialBottomSheet> {
             ),
           ),
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,83 +190,190 @@ class _FreeTrialBottomSheetState extends State<FreeTrialBottomSheet> {
                   // Title
                   Row(
                     children: [
-                      Icon(Icons.account_balance_wallet, color: Colors.blue, size: 28),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Choose UPI App',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.green.shade400, Colors.green.shade600],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.timer, color: Colors.white, size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Start Your Free Trial',
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '${widget.trialConfig['trialDurationDays']} days completely free',
+                            style: TextStyle(fontSize: 16, color: Colors.green.shade600),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Select your UPI app to setup autopay for ${widget.plan.name}',
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                  ),
                   
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   
-                  // Plan Info
+                  // Plan Details Card
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [Colors.blue.shade50, Colors.blue.shade100],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.blue.shade200),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.star, color: Colors.blue.shade600),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${widget.trialConfig['trialDurationDays']} Day Free Trial',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        Row(
+                          children: [
+                            Icon(Icons.star, color: Colors.blue.shade600),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.plan.name,
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Text(
+                              '₹${widget.plan.price.toInt()}',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade700,
                               ),
-                              Text(
-                                'Then ₹${widget.plan.price.toInt()}/${widget.plan.duration}',
-                                style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                            Text(
+                              '/${widget.plan.duration}',
+                              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ...widget.plan.features.map((feature) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(feature, style: const TextStyle(fontSize: 15)),
                               ),
                             ],
                           ),
-                        ),
-                        Text(
-                          'Verification: ₹${widget.trialConfig['mandateVerificationAmount']}',
-                          style: TextStyle(fontSize: 12, color: Colors.orange.shade600),
-                        ),
+                        )),
                       ],
                     ),
                   ),
                   
                   const SizedBox(height: 20),
                   
-                  // UPI Apps List
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: upiApps.length,
-                      itemBuilder: (context, index) {
-                        final app = upiApps[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(16),
+                  // Verification Info
+                  if (widget.trialConfig['isMandateVerificationEnabled'] == true) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.verified_user, color: Colors.orange.shade600),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Account Verification',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                            ],
                           ),
-                          child: ListTile(
-                            leading: Icon(Icons.payment, color: Colors.blue, size: 28),
-                            title: Text(
-                              app['name']!,
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Verification amount: ₹${widget.trialConfig['mandateVerificationAmount']} (refunded instantly)',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  // Explanation
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'How it works:',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('• Click "Start Trial" to begin your free trial'),
+                        const Text('• Choose your preferred UPI app for autopay setup'),
+                        const Text('• Complete verification payment (refunded instantly)'),
+                        Text('• Enjoy premium features for ${widget.trialConfig['trialDurationDays']} days'),
+                        const Text('• Cancel anytime during trial period'),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Start Trial Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _startTrialAndOpenUpiChooser,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 4,
+                      ),
+                      child: isLoading
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Starting Trial...',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            )
+                          : const Text(
+                              'Start Free Trial',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
-                            subtitle: const Text('Tap to setup autopay'),
-                            trailing: const Icon(Icons.arrow_forward_ios),
-                            onTap: () => _selectUpiApp(app),
-                          ),
-                        );
-                      },
                     ),
                   ),
                 ],
@@ -278,9 +385,7 @@ class _FreeTrialBottomSheetState extends State<FreeTrialBottomSheet> {
     );
   }
   
-  Future<void> _selectUpiApp(Map<String, String> app) async {
-    Navigator.pop(context);
-    
+  Future<void> _startTrialAndOpenUpiChooser() async {
     setState(() {
       isLoading = true;
     });
@@ -295,7 +400,7 @@ class _FreeTrialBottomSheetState extends State<FreeTrialBottomSheet> {
       });
 
       if (trialResponse['success'] != true) {
-        throw Exception(trialResponse['message'] ?? 'Failed to start trial');
+        throw Exception(trialResponse['message'] ?? trialResponse['error'] ?? 'Failed to start trial');
       }
 
       // Step 2: Create mandate
@@ -307,11 +412,34 @@ class _FreeTrialBottomSheetState extends State<FreeTrialBottomSheet> {
       });
 
       if (mandateResponse['success'] != true) {
-        throw Exception(mandateResponse['message'] ?? 'Failed to create mandate');
+        throw Exception(mandateResponse['message'] ?? mandateResponse['error'] ?? 'Failed to create mandate');
       }
 
-      // Step 3: Open UPI app
-      await _openUpiApp(app, mandateResponse);
+      // Step 3: Close popup and open system UPI chooser
+      Navigator.pop(context);
+      
+      await RazorpayService.openMandateApproval(
+        mandateUrl: mandateResponse['mandateUrl'],
+        mandateId: mandateResponse['mandateId'],
+        upiApp: null, // Let system choose like upgrade plan flow
+        onSuccess: (result) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Complete ₹${mandateResponse['amount']} verification in your UPI app'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/home');
+        },
+        onError: (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to open UPI app: ${error['error']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+      );
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
