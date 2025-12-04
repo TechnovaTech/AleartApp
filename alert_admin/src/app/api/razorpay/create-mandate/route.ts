@@ -4,6 +4,7 @@ import User from '../../../../../models/User'
 import Plan from '../../../../../models/Plan'
 import Mandate from '../../../../../models/Mandate'
 import UserTimeline from '../../../../../models/UserTimeline'
+import Razorpay from 'razorpay'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,15 +37,48 @@ export async function POST(request: NextRequest) {
       }, { status: 404 })
     }
 
-    // Generate mandate ID
-    const mandateId = `mandate_${Date.now()}_${userId.slice(-6)}`
+    // Initialize Razorpay
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID!,
+      key_secret: process.env.RAZORPAY_KEY_SECRET!
+    })
+
+    // Create real Razorpay mandate
+    const mandateAmount = verificationAmount || 5 // Default ₹5 if not set
     
-    // Create UPI mandate URL
-    const mandateAmount = verificationAmount || amount
-    const upiUrl = `upi://mandate?pa=merchant@razorpay&pn=AlertPe&tr=${mandateId}&tn=UPI%20Mandate%20Setup&am=${mandateAmount}&cu=INR&mode=15&purpose=14&orgid=159001&sign=MEQCIGKr3p7%2BKr%2F8aWyJ`
-    
-    // Create browser mandate URL for fallback
-    const browserUrl = `https://api.razorpay.com/v1/payment_links/mandate/${mandateId}`
+    try {
+      // Create Razorpay payment link for mandate
+      const paymentLink = await razorpay.paymentLink.create({
+        amount: mandateAmount * 100, // Convert to paise
+        currency: 'INR',
+        description: `UPI Autopay Setup - ${plan.name}`,
+        customer: {
+          name: user.username || 'User',
+          email: user.email,
+          contact: user.mobile
+        },
+        notify: {
+          sms: false,
+          email: false
+        },
+        reminder_enable: false,
+        options: {
+          checkout: {
+            method: {
+              upi: true,
+              card: false,
+              netbanking: false,
+              wallet: false
+            }
+          }
+        },
+        callback_url: `${process.env.NEXT_PUBLIC_API_URL || 'https://technovatechnologies.online'}/api/razorpay/mandate-callback`,
+        callback_method: 'get'
+      })
+
+      const mandateId = paymentLink.id
+      const upiUrl = paymentLink.short_url
+      const browserUrl = paymentLink.short_url
 
     // Create mandate record
     const mandate = new Mandate({
@@ -83,7 +117,16 @@ export async function POST(request: NextRequest) {
       mandateUrl: upiUrl,
       browserUrl: browserUrl,
       amount: mandateAmount,
-      planName: plan.name
+      planName: plan.name,
+      razorpayPaymentLinkId: paymentLink.id
+    }
+
+    } catch (razorpayError) {
+      console.error('Razorpay mandate creation failed:', razorpayError)
+      return NextResponse.json({
+        success: false,
+        message: 'Failed to create payment mandate'
+      }, { status: 500 })
     })
 
   } catch (error) {

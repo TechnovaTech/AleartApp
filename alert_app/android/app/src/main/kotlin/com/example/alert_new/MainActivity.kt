@@ -23,6 +23,7 @@ class MainActivity: FlutterActivity() {
     private val EVENT_CHANNEL = "payment_events"
     private val NOTIFICATION_LISTENER_CHANNEL = "notification_listener"
     private val BACKGROUND_SERVICE_CHANNEL = "background_service"
+    private val RAZORPAY_CHANNEL = "razorpay_flutter"
     private val PERMISSION_REQUEST_CODE = 123
     
     companion object {
@@ -52,6 +53,30 @@ class MainActivity: FlutterActivity() {
                 }
                 "checkPermissions" -> {
                     result.success(checkBasicPermissions())
+                }
+                else -> result.notImplemented()
+            }
+        }
+        
+        // Razorpay UPI Channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, RAZORPAY_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "launchUpiIntent" -> {
+                    val url = call.argument<String>("url")
+                    val specificApp = call.argument<String>("specificApp")
+                    if (url != null) {
+                        result.success(launchUpiIntent(url, specificApp))
+                    } else {
+                        result.success(false)
+                    }
+                }
+                "launchPaymentUrl" -> {
+                    val url = call.argument<String>("url")
+                    if (url != null) {
+                        result.success(launchPaymentUrl(url))
+                    } else {
+                        result.success(false)
+                    }
                 }
                 else -> result.notImplemented()
             }
@@ -220,6 +245,55 @@ class MainActivity: FlutterActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+    
+    private fun launchUpiIntent(upiUrl: String, specificApp: String?): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(upiUrl))
+            
+            // If specific app is provided, try to launch it
+            if (specificApp != null) {
+                intent.setPackage(specificApp)
+                
+                // Check if the app is installed
+                val packageManager = packageManager
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                    return true
+                }
+            }
+            
+            // If specific app failed or not provided, try generic UPI intent
+            val genericIntent = Intent(Intent.ACTION_VIEW, Uri.parse(upiUrl))
+            genericIntent.addCategory(Intent.CATEGORY_BROWSABLE)
+            
+            if (genericIntent.resolveActivity(packageManager) != null) {
+                startActivity(genericIntent)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+    
+    private fun launchPaymentUrl(paymentUrl: String): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl))
+            intent.addCategory(Intent.CATEGORY_BROWSABLE)
+            
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(intent)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 }

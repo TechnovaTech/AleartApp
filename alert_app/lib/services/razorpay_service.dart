@@ -81,18 +81,7 @@ class RazorpayService {
     }
   }
   
-  static Future<bool> _launchUpiIntent(String upiUrl, String? specificApp) async {
-    try {
-      final result = await _channel.invokeMethod('launchUpiIntent', {
-        'url': upiUrl,
-        'specificApp': specificApp,
-      });
-      return result ?? false;
-    } catch (e) {
-      print('Failed to launch UPI intent: $e');
-      return false;
-    }
-  }
+
   
   static Future<Map<String, dynamic>> cancelSubscription(String userId) async {
     try {
@@ -147,12 +136,12 @@ class RazorpayService {
     try {
       bool success = false;
       
-      // Try to open in specific UPI app first
+      // Try to launch UPI app using platform channel
       if (upiApp != null && mandateUrl.startsWith('upi://')) {
         success = await _launchUpiIntent(mandateUrl, upiApp);
       }
       
-      // If UPI app failed, try generic UPI
+      // If UPI app failed, try generic UPI intent
       if (!success && mandateUrl.startsWith('upi://')) {
         success = await _launchUpiIntent(mandateUrl, null);
       }
@@ -169,6 +158,19 @@ class RazorpayService {
       }
     } catch (e) {
       onError({'error': e.toString()});
+    }
+  }
+  
+  static Future<bool> _launchUpiIntent(String upiUrl, String? specificApp) async {
+    try {
+      final result = await _channel.invokeMethod('launchUpiIntent', {
+        'url': upiUrl,
+        'specificApp': specificApp,
+      });
+      return result ?? false;
+    } catch (e) {
+      print('Failed to launch UPI intent: $e');
+      return false;
     }
   }
 }
