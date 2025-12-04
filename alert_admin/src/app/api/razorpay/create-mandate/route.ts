@@ -82,8 +82,7 @@ export async function POST(request: NextRequest) {
       mandateUrl: upiUrl,
       browserUrl: browserUrl,
       amount: mandateAmount,
-      planName: plan.name,
-      mandateId: mandateId
+      planName: plan.name
     })
 
   } catch (error) {
