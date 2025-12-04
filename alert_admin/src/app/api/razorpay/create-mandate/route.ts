@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       amount: mandateAmount,
       planName: plan.name,
       razorpayPaymentLinkId: paymentLink.id
-    }
+    })
 
     } catch (razorpayError) {
       console.error('Razorpay mandate creation failed:', razorpayError)
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         success: false,
         message: 'Failed to create payment mandate'
       }, { status: 500 })
-    })
+    }
 
   } catch (error) {
     console.error('Error creating mandate:', error)
