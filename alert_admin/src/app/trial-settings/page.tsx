@@ -13,9 +13,9 @@ interface TrialConfig {
 
 export default function TrialSettingsPage() {
   const [config, setConfig] = useState<TrialConfig>({
-    trialDurationDays: 7,
+    trialDurationDays: 1,
     isTrialEnabled: true,
-    trialFeatures: []
+    trialFeatures: ['Basic UPI alerts', 'Limited reports']
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

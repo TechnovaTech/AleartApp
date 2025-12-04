@@ -9,9 +9,9 @@ export async function GET() {
     let config = await TrialConfig.findOne()
     if (!config) {
       config = new TrialConfig({
-        trialDurationDays: 7,
+        trialDurationDays: 1,
         isTrialEnabled: true,
-        trialFeatures: ['SMS Payment Detection', 'Basic Analytics', 'QR Code Generation']
+        trialFeatures: ['Basic UPI alerts', 'Limited reports', 'QR Code Generation']
       })
       await config.save()
     }

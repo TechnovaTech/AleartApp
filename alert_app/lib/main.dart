@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/home.dart';
 import 'screens/home_screen.dart';
 import 'screens/login.dart';
+import 'screens/get_started_screen.dart';
 import 'screens/subscription_screen.dart';
 import 'screens/subscription_status_screen.dart';
 import 'screens/user_timeline_screen.dart';
@@ -73,6 +74,7 @@ class _MyAppState extends State<MyApp> {
       home: LanguageWrapper(child: const AuthWrapper()),
       debugShowCheckedModeBanner: false,
       routes: {
+        '/get-started': (context) => const GetStartedScreen(),
         '/subscription': (context) => const SubscriptionScreen(),
         '/subscription-status': (context) => const SubscriptionStatusScreen(),
         '/user-timeline': (context) => const UserTimelineScreen(),
@@ -85,6 +87,8 @@ class _MyAppState extends State<MyApp> {
             userId: args['userId'] ?? '',
             planId: args['planId'] ?? '',
             planAmount: args['planAmount']?.toDouble(),
+            isTrialMode: args['isTrialMode'] ?? false,
+            trialDays: args['trialDays'],
           );
         },
       },

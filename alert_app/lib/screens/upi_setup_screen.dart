@@ -8,12 +8,16 @@ class UpiSetupScreen extends StatefulWidget {
   final String userId;
   final String planId;
   final double? planAmount;
+  final bool isTrialMode;
+  final int? trialDays;
   
   const UpiSetupScreen({
     Key? key,
     required this.userId,
     required this.planId,
     this.planAmount,
+    this.isTrialMode = false,
+    this.trialDays,
   }) : super(key: key);
 
   @override
@@ -246,20 +250,26 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: widget.isTrialMode ? Colors.green.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.payment, size: 48, color: Colors.blue),
+                        Icon(
+                          widget.isTrialMode ? Icons.timer : Icons.payment,
+                          size: 48,
+                          color: widget.isTrialMode ? Colors.green : Colors.blue,
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Razorpay Payment',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        Text(
+                          widget.isTrialMode ? 'Free Trial + Autopay Setup' : 'Razorpay Payment',
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Pay ₹${widget.planAmount ?? 99} securely with Razorpay',
+                          widget.isTrialMode 
+                              ? '${widget.trialDays ?? 1} day free trial, then ₹${widget.planAmount ?? 99}/month'
+                              : 'Pay ₹${widget.planAmount ?? 99} securely with Razorpay',
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.grey),
                         ),
@@ -336,22 +346,31 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: widget.isTrialMode ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Payment Process:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        Text(
+                          widget.isTrialMode ? 'Trial + Autopay Setup:' : 'Payment Process:',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                        const Text('1. Select your preferred UPI app above'),
-                        const Text('2. Click "Pay Now" below'),
-                        Text('3. ${selectedApp?['name'] ?? 'Payment app'} will open'),
-                        const Text('4. Complete the payment securely'),
-                        const Text('5. Your subscription will be activated'),
+                        if (widget.isTrialMode) ...[
+                          const Text('1. Select your preferred UPI app above'),
+                          const Text('2. Click "Setup Autopay" below'),
+                          Text('3. ${selectedApp?['name'] ?? 'Payment app'} will open'),
+                          const Text('4. Approve the UPI mandate (₹0 for trial)'),
+                          Text('5. Enjoy ${widget.trialDays ?? 1} day free trial!'),
+                          const Text('6. Autopay starts after trial ends'),
+                        ] else ...[
+                          const Text('1. Select your preferred UPI app above'),
+                          const Text('2. Click "Pay Now" below'),
+                          Text('3. ${selectedApp?['name'] ?? 'Payment app'} will open'),
+                          const Text('4. Complete the payment securely'),
+                          const Text('5. Your subscription will be activated'),
+                        ],
                       ],
                     ),
                   ),
@@ -371,7 +390,9 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                       child: isProcessing
                           ? const CircularProgressIndicator(color: Colors.white)
                           : Text(
-                              'Pay ₹${widget.planAmount ?? 99} - Secure Payment',
+                              widget.isTrialMode 
+                                  ? 'Setup Autopay - Start Free Trial'
+                                  : 'Pay ₹${widget.planAmount ?? 99} - Secure Payment',
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),
