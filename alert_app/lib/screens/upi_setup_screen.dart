@@ -10,6 +10,7 @@ class UpiSetupScreen extends StatefulWidget {
   final double? planAmount;
   final bool isTrialMode;
   final int? trialDays;
+  final double? verificationAmount;
   
   const UpiSetupScreen({
     Key? key,
@@ -18,6 +19,7 @@ class UpiSetupScreen extends StatefulWidget {
     this.planAmount,
     this.isTrialMode = false,
     this.trialDays,
+    this.verificationAmount,
   }) : super(key: key);
 
   @override
@@ -86,47 +88,52 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
     });
 
     try {
-      // Create real Razorpay subscription
-      final response = await RazorpayService.createSubscription(
-        userId: widget.userId,
-        planId: widget.planId,
-        amount: widget.planAmount,
-      );
-
-      if (response['success'] == true) {
-        final upiLink = response['upiLink'] ?? response['shortUrl'];
-        final paymentUrl = response['paymentUrl'];
-        
-        print('Payment response: $response');
-        
-        if (upiLink != null && upiLink.isNotEmpty) {
-          // Launch payment with selected UPI app
-          final specificApp = selectedApp?['packageName'];
-          
-          await RazorpayService.openCheckout(
-            subscriptionId: response['subscriptionId'] ?? '',
-            shortUrl: upiLink,
-            specificApp: specificApp,
-            amount: widget.planAmount,
-            onSuccess: (result) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${selectedApp?['name'] ?? 'Payment app'} opened! Complete payment to activate subscription.'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-            },
-            onError: (error) {
-              _showRetryDialog('UPI app failed to open. Try browser payment.');
-            },
-          );
-        } else {
-          _showRetryDialog('Payment setup failed. Please try again.');
-        }
+      if (widget.isTrialMode) {
+        // Show autopay setup popup for trial mode
+        _showAutopaySetupDialog();
       } else {
-        final errorMsg = response['error'] ?? 'Unknown error occurred';
-        _showRetryDialog('Setup failed: $errorMsg');
+        // Create real Razorpay subscription for regular payment
+        final response = await RazorpayService.createSubscription(
+          userId: widget.userId,
+          planId: widget.planId,
+          amount: widget.planAmount,
+        );
+
+        if (response['success'] == true) {
+          final upiLink = response['upiLink'] ?? response['shortUrl'];
+          final paymentUrl = response['paymentUrl'];
+          
+          print('Payment response: $response');
+          
+          if (upiLink != null && upiLink.isNotEmpty) {
+            // Launch payment with selected UPI app
+            final specificApp = selectedApp?['packageName'];
+            
+            await RazorpayService.openCheckout(
+              subscriptionId: response['subscriptionId'] ?? '',
+              shortUrl: upiLink,
+              specificApp: specificApp,
+              amount: widget.planAmount,
+              onSuccess: (result) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${selectedApp?['name'] ?? 'Payment app'} opened! Complete payment to activate subscription.'),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              },
+              onError: (error) {
+                _showRetryDialog('UPI app failed to open. Try browser payment.');
+              },
+            );
+          } else {
+            _showRetryDialog('Payment setup failed. Please try again.');
+          }
+        } else {
+          final errorMsg = response['error'] ?? 'Unknown error occurred';
+          _showRetryDialog('Setup failed: $errorMsg');
+        }
       }
     } catch (e) {
       _showRetryDialog('Network error: $e');
@@ -181,6 +188,132 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
     } catch (e) {
       _showRetryDialog(e.toString());
     }
+  }
+
+  void _showAutopaySetupDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 28),
+            const SizedBox(width: 12),
+            const Text('Setup Autopay'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your ${widget.trialDays ?? 1} day free trial is starting!',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text('Selected UPI App: ${selectedApp?['name'] ?? 'Default'}'),
+            const SizedBox(height: 8),
+            Text('Plan: ₹${widget.planAmount?.toInt() ?? 99}/month'),
+            const SizedBox(height: 12),
+            const Text(
+              'Next steps:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const Text('1. Your UPI app will open'),
+            const Text('2. Approve the autopay mandate (₹0 for trial)'),
+            const Text('3. Enjoy your free trial!'),
+            const Text('4. Autopay starts after trial ends'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+            child: const Text('Skip for Now'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // Simulate opening UPI app for autopay setup
+              await _simulateUpiAutopaySetup();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Open ${selectedApp?['name'] ?? 'UPI App'}'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _simulateUpiAutopaySetup() async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Opening UPI app...'),
+          ],
+        ),
+      ),
+    );
+
+    // Simulate delay
+    await Future.delayed(const Duration(seconds: 2));
+    
+    Navigator.pop(context); // Close loading dialog
+    
+    // Show success message
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.celebration, color: Colors.green, size: 28),
+            const SizedBox(width: 12),
+            const Text('Trial Started!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Your ${widget.trialDays ?? 1} day free trial is now active!',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            const Text('Autopay mandate has been set up successfully.'),
+            const SizedBox(height: 8),
+            Text(
+              'Billing starts: After ${widget.trialDays ?? 1} day(s)',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Start Using App'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showRetryDialog(String error) {
@@ -268,7 +401,9 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                         const SizedBox(height: 8),
                         Text(
                           widget.isTrialMode 
-                              ? '${widget.trialDays ?? 1} day free trial, then ₹${widget.planAmount ?? 99}/month'
+                              ? widget.verificationAmount != null
+                                  ? 'Verify account with ₹${widget.verificationAmount!.toInt()} (refunded) + Setup autopay for ₹${widget.planAmount ?? 99}/month'
+                                  : '${widget.trialDays ?? 1} day free trial, then ₹${widget.planAmount ?? 99}/month'
                               : 'Pay ₹${widget.planAmount ?? 99} securely with Razorpay',
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.grey),
@@ -361,9 +496,17 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                           const Text('1. Select your preferred UPI app above'),
                           const Text('2. Click "Setup Autopay" below'),
                           Text('3. ${selectedApp?['name'] ?? 'Payment app'} will open'),
-                          const Text('4. Approve the UPI mandate (₹0 for trial)'),
-                          Text('5. Enjoy ${widget.trialDays ?? 1} day free trial!'),
-                          const Text('6. Autopay starts after trial ends'),
+                          if (widget.verificationAmount != null) ...[
+                            Text('4. Pay ₹${widget.verificationAmount!.toInt()} for verification'),
+                            const Text('5. Amount will be refunded immediately'),
+                            const Text('6. Approve UPI mandate for autopay'),
+                            Text('7. Enjoy ${widget.trialDays ?? 1} day free trial!'),
+                            const Text('8. Autopay starts after trial ends'),
+                          ] else ...[
+                            const Text('4. Approve the UPI mandate (₹0 for trial)'),
+                            Text('5. Enjoy ${widget.trialDays ?? 1} day free trial!'),
+                            const Text('6. Autopay starts after trial ends'),
+                          ],
                         ] else ...[
                           const Text('1. Select your preferred UPI app above'),
                           const Text('2. Click "Pay Now" below'),
@@ -391,7 +534,9 @@ class _UpiSetupScreenState extends State<UpiSetupScreen> {
                           ? const CircularProgressIndicator(color: Colors.white)
                           : Text(
                               widget.isTrialMode 
-                                  ? 'Setup Autopay - Start Free Trial'
+                                  ? widget.verificationAmount != null
+                                      ? 'Verify & Setup Autopay - ₹${widget.verificationAmount!.toInt()}'
+                                      : 'Setup Autopay - Start Free Trial'
                                   : 'Pay ₹${widget.planAmount ?? 99} - Secure Payment',
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'get_started_screen.dart';
 import '../services/api_service.dart';
 
 class SetPasswordScreen extends StatefulWidget {
@@ -77,9 +78,10 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
         const SnackBar(content: Text('Account created successfully!')),
       );
       
+      // Navigate to Get Started screen for first-time users
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreenMain()),
+        MaterialPageRoute(builder: (context) => const GetStartedScreen()),
         (route) => false,
       );
     } else {

@@ -89,6 +89,7 @@ class _MyAppState extends State<MyApp> {
             planAmount: args['planAmount']?.toDouble(),
             isTrialMode: args['isTrialMode'] ?? false,
             trialDays: args['trialDays'],
+            verificationAmount: args['verificationAmount']?.toDouble(),
           );
         },
       },

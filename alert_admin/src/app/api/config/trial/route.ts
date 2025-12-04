@@ -11,7 +11,9 @@ export async function GET() {
       config = new TrialConfig({
         trialDurationDays: 1,
         isTrialEnabled: true,
-        trialFeatures: ['Basic UPI alerts', 'Limited reports', 'QR Code Generation']
+        trialFeatures: ['Basic UPI alerts', 'Limited reports', 'QR Code Generation'],
+        mandateVerificationAmount: 5,
+        isMandateVerificationEnabled: true
       })
       await config.save()
     }
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     await dbConnect()
     
     const body = await request.json()
-    const { trialDurationDays, isTrialEnabled, trialFeatures } = body
+    const { trialDurationDays, isTrialEnabled, trialFeatures, mandateVerificationAmount, isMandateVerificationEnabled } = body
     
     let config = await TrialConfig.findOne()
     if (!config) {
@@ -37,6 +39,8 @@ export async function POST(request: NextRequest) {
     if (trialDurationDays !== undefined) config.trialDurationDays = trialDurationDays
     if (isTrialEnabled !== undefined) config.isTrialEnabled = isTrialEnabled
     if (trialFeatures !== undefined) config.trialFeatures = trialFeatures
+    if (mandateVerificationAmount !== undefined) config.mandateVerificationAmount = mandateVerificationAmount
+    if (isMandateVerificationEnabled !== undefined) config.isMandateVerificationEnabled = isMandateVerificationEnabled
     config.updatedAt = new Date()
     
     await config.save()

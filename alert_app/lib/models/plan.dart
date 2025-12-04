@@ -1,26 +1,26 @@
 class Plan {
   final String id;
   final String name;
-  final double monthlyPrice;
-  final double yearlyPrice;
+  final double price;
+  final String duration;
   final List<String> features;
   final bool isActive;
 
   Plan({
     required this.id,
     required this.name,
-    required this.monthlyPrice,
-    required this.yearlyPrice,
+    required this.price,
+    required this.duration,
     required this.features,
     required this.isActive,
   });
 
   factory Plan.fromJson(Map<String, dynamic> json) {
     return Plan(
-      id: json['_id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
-      monthlyPrice: (json['monthlyPrice'] ?? 0).toDouble(),
-      yearlyPrice: (json['yearlyPrice'] ?? 0).toDouble(),
+      price: (json['price'] ?? 0).toDouble(),
+      duration: json['duration'] ?? 'monthly',
       features: List<String>.from(json['features'] ?? []),
       isActive: json['isActive'] ?? true,
     );
@@ -30,8 +30,8 @@ class Plan {
     return {
       '_id': id,
       'name': name,
-      'monthlyPrice': monthlyPrice,
-      'yearlyPrice': yearlyPrice,
+      'price': price,
+      'duration': duration,
       'features': features,
       'isActive': isActive,
     };

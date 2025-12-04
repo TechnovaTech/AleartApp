@@ -9,13 +9,17 @@ interface TrialConfig {
   trialDurationDays: number
   isTrialEnabled: boolean
   trialFeatures: string[]
+  mandateVerificationAmount?: number
+  isMandateVerificationEnabled?: boolean
 }
 
 export default function TrialSettingsPage() {
   const [config, setConfig] = useState<TrialConfig>({
     trialDurationDays: 1,
     isTrialEnabled: true,
-    trialFeatures: ['Basic UPI alerts', 'Limited reports']
+    trialFeatures: ['Basic UPI alerts', 'Limited reports'],
+    mandateVerificationAmount: 5,
+    isMandateVerificationEnabled: true
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -176,6 +180,52 @@ export default function TrialSettingsPage() {
               >
                 Add Feature
               </button>
+            </div>
+          </div>
+
+          {/* Mandate Verification */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Mandate Verification Settings</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={config.isMandateVerificationEnabled || false}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      isMandateVerificationEnabled: e.target.checked
+                    })}
+                    className="mr-2 rounded border-gray-300"
+                  />
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                  Enable Mandate Verification
+                </label>
+                <p className="text-sm text-gray-600 mt-1">
+                  Users will pay a small amount to verify their account before setting up autopay
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Verification Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={config.mandateVerificationAmount || 5}
+                  onChange={(e) => setConfig({
+                    ...config,
+                    mandateVerificationAmount: parseInt(e.target.value) || 5
+                  })}
+                  className="w-32 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-sm text-gray-600 mt-1">
+                  This amount will be charged and immediately refunded to verify the user's payment method
+                </p>
+              </div>
             </div>
           </div>
 

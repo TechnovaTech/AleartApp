@@ -13,6 +13,16 @@ const TrialConfigSchema = new mongoose.Schema({
   trialFeatures: [{
     type: String
   }],
+  mandateVerificationAmount: {
+    type: Number,
+    default: 5,
+    min: 1,
+    max: 100
+  },
+  isMandateVerificationEnabled: {
+    type: Boolean,
+    default: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
